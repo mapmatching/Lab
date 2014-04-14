@@ -52,6 +52,7 @@ struct NODE_DIJKSTRA
 	}
 };
 
+
 class Map
 {
 public:
