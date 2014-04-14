@@ -70,6 +70,7 @@ public:
 	double shortestPathLength(int ID1, int ID2, double dist1, double dist2, double deltaT);
 	double distM(double lat, double lon, Edge* edge) const; //返回(lat,lon)点到edge的距离，单位为米
 	double distM(double lat, double lon, Edge* edge, double& prjDist) const;//同上，同时记录投影点到edge起点的距离存入prjDist，无投影则记为0
+	double distMFromTransplantFromSRC(double lat, double lon, Edge* edge, double& prjDist); //移植SRC版本：返回(lat,lon)点到edge的距离，单位为米；同时记录投影点到edge起点的距离存入prjDist
 	int hasEdge(int startNodeId, int endNodeId) const; //判断startNodeId与endNodeId之间有无边,没有边返回-1，有边返回edgeId
 	int insertNode(double lat, double lon); //插入一个新结点,返回新结点id
 	int insertEdge(Figure* figure, int startNodeId, int endNodeId); //在当前图中插入边,返回新边id

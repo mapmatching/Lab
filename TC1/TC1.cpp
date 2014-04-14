@@ -33,7 +33,7 @@ bool zoomed = true;
 bool doExtendAndOutput = true;
 
 typedef list<GeoPoint*> Traj;
-Map map;
+Map roadNetwork;
 MapDrawer md;
 
 double limitSpeed = 50; //间隔大于33m/s的prune掉
@@ -296,7 +296,7 @@ void doExtendForOneMMTraj(Traj* traj, list<Traj*>& dest, double extendDistM, dou
 						
 					{
 						tmpTraj->push_front(extendPt);
-						if (map.getNearEdges(extendPt->lat, extendPt->lon, extendDistM).size() > 0)
+						if (roadNetwork.getNearEdges(extendPt->lat, extendPt->lon, extendDistM).size() > 0)
 						//[注意]该语句可能会产生内存泄露			
 							break;
 						preExtendPt = extendPt;
@@ -328,7 +328,7 @@ void doExtendForOneMMTraj(Traj* traj, list<Traj*>& dest, double extendDistM, dou
 					&& !overDistLimit(preExtendPt, extendPt)) //扩展点离前一个扩展点距离不长
 				{
 					tmpTraj->push_back(extendPt);
-					if (map.getNearEdges(extendPt->lat, extendPt->lon, extendDistM).size() > 0)
+					if (roadNetwork.getNearEdges(extendPt->lat, extendPt->lon, extendDistM).size() > 0)
 						break;
 					preExtendPt = extendPt;
 					extendPtIter++;
@@ -1317,7 +1317,7 @@ int extendAndSplitEdge(GeoPoint* prePt, GeoPoint* succPt, double threshold, bool
 	double C = prePt->lat * (succPt->lon - prePt->lon)
 		- prePt->lon * (succPt->lat - prePt->lat);
 	vector<Edge*> nearEdges;
-	map.getNearEdges(succPt->lat, succPt->lon, threshold, nearEdges);
+	roadNetwork.getNearEdges(succPt->lat, succPt->lon, threshold, nearEdges);
 	int candidateEdgeId = -1;
 	double candidateIntersectX = -1.0;
 	double candidateIntersectY = -1.0;
@@ -1380,7 +1380,7 @@ int extendAndSplitEdge(GeoPoint* prePt, GeoPoint* succPt, double threshold, bool
 		//cout << "candidateEdgeId" << candidateEdgeId << endl;
 		//printf("%.8lf,%.8lf", candidateIntersectY, candidateIntersectX);
 		//system("pause");
-		return map.splitEdge(candidateEdgeId, candidateIntersectY, candidateIntersectX);
+		return roadNetwork.splitEdge(candidateEdgeId, candidateIntersectY, candidateIntersectX);
 	}
 
 }
@@ -1403,18 +1403,18 @@ Edge* addNewPolyLineIntoMap(PolylineGenerator& pg)
 	double splitRoadThres = 80; //延长线与路段的交点必须满足小于这个阈值,否则谁都不连
 	//connectivity of the first
 	vector<Edge*> nearEdges;
-	map.getNearEdges(firstPt->lat, firstPt->lon, intersectionThres, nearEdges);
+	roadNetwork.getNearEdges(firstPt->lat, firstPt->lon, intersectionThres, nearEdges);
 	int minIntersectDist = INFINITE;
 	int startNodeId = -1;
 	for (int i = 0; i < nearEdges.size(); i++)
 	{
-		double distToStartNode = firstPt->distM(map.nodes[nearEdges[i]->startNodeId]);
+		double distToStartNode = firstPt->distM(roadNetwork.nodes[nearEdges[i]->startNodeId]);
 		if (distToStartNode < intersectionThres && distToStartNode < minIntersectDist)
 		{
 			minIntersectDist = distToStartNode;
 			startNodeId = nearEdges[i]->startNodeId;
 		}
-		double distToEndNode = firstPt->distM(map.nodes[nearEdges[i]->endNodeId]);
+		double distToEndNode = firstPt->distM(roadNetwork.nodes[nearEdges[i]->endNodeId]);
 		if (distToEndNode < intersectionThres && distToEndNode < minIntersectDist)
 		{
 			minIntersectDist = distToEndNode;
@@ -1423,7 +1423,7 @@ Edge* addNewPolyLineIntoMap(PolylineGenerator& pg)
 	}
 	if (startNodeId != -1) //在范围内找到了intersection则连上
 	{
-		newFigure->push_front(map.nodes[startNodeId]);
+		newFigure->push_front(roadNetwork.nodes[startNodeId]);
 	}
 	else
 	{
@@ -1436,34 +1436,34 @@ Edge* addNewPolyLineIntoMap(PolylineGenerator& pg)
 		{
 			if (onExtend)
 			{
-				newFigure->push_front(map.nodes[newNodeId]);
+				newFigure->push_front(roadNetwork.nodes[newNodeId]);
 			}
 			else
 			{
-				newFigure->front() = map.nodes[newNodeId];
+				newFigure->front() = roadNetwork.nodes[newNodeId];
 			}			
 			startNodeId = newNodeId;
 		}
 		else //没有满足要求的路段,则不连
 		{
-			startNodeId = map.insertNode(newFigure->front()->lat, newFigure->front()->lon);
+			startNodeId = roadNetwork.insertNode(newFigure->front()->lat, newFigure->front()->lon);
 		}
 	}
 
 	//connectivity of the last
 	nearEdges.clear();
-	map.getNearEdges(lastPt->lat, lastPt->lon, intersectionThres, nearEdges);
+	roadNetwork.getNearEdges(lastPt->lat, lastPt->lon, intersectionThres, nearEdges);
 	minIntersectDist = INFINITE;
 	int endNodeId = -1;
 	for (int i = 0; i < nearEdges.size(); i++)
 	{
-		double distToStartNode = lastPt->distM(map.nodes[nearEdges[i]->startNodeId]);
+		double distToStartNode = lastPt->distM(roadNetwork.nodes[nearEdges[i]->startNodeId]);
 		if (distToStartNode < intersectionThres && distToStartNode < minIntersectDist)
 		{
 			minIntersectDist = distToStartNode;
 			endNodeId = nearEdges[i]->startNodeId;
 		}
-		double distToEndNode = lastPt->distM(map.nodes[nearEdges[i]->endNodeId]);
+		double distToEndNode = lastPt->distM(roadNetwork.nodes[nearEdges[i]->endNodeId]);
 		if (distToEndNode < intersectionThres && distToEndNode < minIntersectDist)
 		{
 			minIntersectDist = distToEndNode;
@@ -1472,7 +1472,7 @@ Edge* addNewPolyLineIntoMap(PolylineGenerator& pg)
 	}
 	if (endNodeId != -1) //在范围内找到了intersection则连上
 	{
-		newFigure->push_back(map.nodes[endNodeId]);
+		newFigure->push_back(roadNetwork.nodes[endNodeId]);
 	}
 	else
 	{
@@ -1485,17 +1485,17 @@ Edge* addNewPolyLineIntoMap(PolylineGenerator& pg)
 		{
 			if (onExtend)
 			{
-				newFigure->push_back(map.nodes[newNodeId]);
+				newFigure->push_back(roadNetwork.nodes[newNodeId]);
 			}
 			else
 			{
-				newFigure->back() = map.nodes[newNodeId];
+				newFigure->back() = roadNetwork.nodes[newNodeId];
 			}
 			endNodeId = newNodeId;
 		}
 		else //没有满足要求的路段,则不连
 		{
-			endNodeId = map.insertNode(newFigure->back()->lat, newFigure->back()->lon);
+			endNodeId = roadNetwork.insertNode(newFigure->back()->lat, newFigure->back()->lon);
 		}
 	}
 	//构造双向路
@@ -1504,9 +1504,9 @@ Edge* addNewPolyLineIntoMap(PolylineGenerator& pg)
 	{
 		newFigureReverse->push_front(*iter);
 	}
-	int newEdgeid = map.insertEdge(newFigure, startNodeId, endNodeId);
-	int newEdgeidR = map.insertEdge(newFigureReverse, endNodeId, startNodeId);
-	return map.edges[newEdgeid];
+	int newEdgeid = roadNetwork.insertEdge(newFigure, startNodeId, endNodeId);
+	int newEdgeidR = roadNetwork.insertEdge(newFigureReverse, endNodeId, startNodeId);
+	return roadNetwork.edges[newEdgeid];
 	//drawOneTraj(Color::Black, map.edges[newEdgeid]->figure);
 	/*for (int row = 0; row < map.gridHeight; row++)
 	{
@@ -2307,7 +2307,7 @@ void core()
 					//TODO: need test!
 					if (newEdgeCount == 6)
 					{
-						map.drawMap(Color::Blue, md);
+						roadNetwork.drawMap(Color::Blue, md);
 						drawAllGennedEdges();
 						drawClusteredTrajs();
 						return;
@@ -2316,7 +2316,7 @@ void core()
 			}
 		} // end for (int k = 0; k < trajs.size(); k++)
 	}
-	map.drawMap(Color::Blue, md);
+	roadNetwork.drawMap(Color::Blue, md);
 	drawClusteredTrajs();
 }
 
@@ -2369,9 +2369,9 @@ void core_v2()
 			}
 		} // end for (int k = 0; k < trajs.size(); k++)
 	}
-	map.drawMap(Color::Blue, md);
+	roadNetwork.drawMap(Color::Blue, md);
 	drawAllGennedEdges();
-	map.drawMap(Color::Blue, md);
+	roadNetwork.drawMap(Color::Blue, md);
 	//drawClusteredTrajs();
 }
 
@@ -2773,8 +2773,8 @@ void main()
 	}
 	/*zooming part end*/
 
-	map.setArea(md);
-	map.open("D:\\trajectory\\singapore_data\\singapore_map\\", (int)(500.0 * 1600.0/ 15000.0));
+	roadNetwork.setArea(md);
+	roadNetwork.open("D:\\trajectory\\singapore_data\\singapore_map\\", (int)(500.0 * 1600.0/ 15000.0));
 	printf("\n");
 	trajDir += "4000\\";
 

@@ -403,14 +403,12 @@ void Map::getNearEdges(double lat, double lon, int k, vector<Edge*>& dest)
 
 double Map::shortestPathLength(int ID1, int ID2, double dist1, double dist2, double deltaT)
 {
-	int size = nodes.size();
-	//double *dist = new double[size];
-	double dist[100000];
-	//bool *flag = new bool[size];
-	bool flag[100000];
-	memset(flag, 0, sizeof(flag));
-	for (int i = 0; i < size; i++) {
+	int maxNodeNum = nodes.size();
+	vector<double> dist = vector<double>(maxNodeNum);
+	vector<bool> flag = vector<bool>(maxNodeNum);
+	for (int i = 0; i < maxNodeNum; i++) {
 		dist[i] = INF;
+		flag[i] = false;
 	}
 	dist[ID1] = 0;
 	priority_queue<NODE_DIJKSTRA> Q;
@@ -420,7 +418,7 @@ double Map::shortestPathLength(int ID1, int ID2, double dist1, double dist2, dou
 		NODE_DIJKSTRA x = Q.top();
 		Q.pop();
 		int u = x.t;
-		if (x.dist + dist1 - dist2 > deltaT*MAXSPEED){
+		if (x.dist > deltaT*MAXSPEED){
 			return INF;
 		}
 		if (flag[u]) {
@@ -439,9 +437,8 @@ double Map::shortestPathLength(int ID1, int ID2, double dist1, double dist2, dou
 		}
 	}
 	double resultLength = dist[ID2];
-	//delete []dist;
-	//delete []flag;
 	return resultLength;
+
 }
 
 double Map::distM(double lat, double lon, Edge* edge) const
@@ -548,6 +545,47 @@ double Map::distM(double lat, double lon, Edge* edge, double& prjDist) const
 	}
 	prjDist = tempTotalPrjDist;
 	return minDist;
+}
+
+double Map::distMFromTransplantFromSRC(double lat, double lon, Edge* edge, double& prjDist)
+{
+	//////////////////////////////////////////////////////////////////////////
+	///移植SRC版本：返回(lat,lon)点到edge的距离，单位为米；同时记录投影点到edge起点的距离存入prjDist
+	//////////////////////////////////////////////////////////////////////////
+	double tmpSideLen = 0;
+	double result = 1e80, tmp = 0;
+	double x = -1, y = -1;
+	for (Figure::iterator figIter = edge->figure->begin(); figIter != edge->figure->end(); figIter++){
+		if (x != -1 && y != -1){
+			double x2 = (*figIter)->lat;
+			double y2 = (*figIter)->lon;
+			double dist = GeoPoint::distM(x, y, lat, lon); //circle Distance(x, y, nodeX, nodeY);
+			if (dist<result){
+				result = dist;
+				tmpSideLen = tmp;
+			}
+			double vecX1 = x2 - x;
+			double vecY1 = y2 - y;
+			double vecX2 = lat - x;
+			double vecY2 = lon - y;
+			double vecX3 = lat - x2;
+			double vecY3 = lon - y2;
+			if (vecX1*vecX2 + vecY1*vecY2>0 && -vecX1*vecX3 - vecY1*vecY3 > 0 && (vecX1 != 0 || vecY1 != 0)){
+				double rate = ((lat - x2)*vecX1 + (lon - y2)*vecY1) / (-vecX1*vecX1 - vecY1*vecY1);
+				double nearX = rate*x + (1 - rate)*x2, nearY = rate*y + (1 - rate)*y2;
+				double dist = GeoPoint::distM(nearX, nearY, lat, lon);
+				if (dist < result){
+					result = dist;
+					tmpSideLen = tmp + GeoPoint::distM(x, y, nearX, nearY);
+				}
+			}
+			tmp += GeoPoint::distM(x, y, x2, y2);
+		}
+		x = (*figIter)->lat;
+		y = (*figIter)->lon;
+	}
+	prjDist = tmpSideLen;
+	return result;
 }
 
 int Map::hasEdge(int startNodeId, int endNodeId) const
