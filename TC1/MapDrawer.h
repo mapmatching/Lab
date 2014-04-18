@@ -1,5 +1,5 @@
 /* 
- * Last Updated at [2014/3/4 15:09] by wuhao
+ * Last Updated at [2014/4/15 16:29] by wuhao
  */
 
 /*
@@ -49,6 +49,7 @@ public:
 	MapDrawer();
 	~MapDrawer();
 
+	//绘画函数具有鲁棒性，无需判断是否在范围内
 	void drawPoint(Color color, int x, int y); //在屏幕(x,y)画一个像素点
 	void drawPoint(Color color, double lat, double lon); //在地里坐标(lat,lon)对应的图上画一个像素点
 	void drawBigPoint(Color color, int x, int y); //在屏幕(x,y)画一个十字点
@@ -67,6 +68,7 @@ public:
 	void setResolution(int width); //设置画布宽度，高度由经纬度区域按比例自动计算	
 	void setResolution(int width, int height); //自定义画布，不推荐使用
 	bool inArea(double lat, double lon); //判断轨迹经纬度是否在指定画图区域内
+	bool inArea(int x, int y); //判断点(x,y)是否在画布范围内
 	void zoomIn(int upperLeft_x, int upperLeft_y, int width, int height, int newR_width); //【只适合用于北半球！】放大区域，左上角像素坐标和矩形长宽为参数输入，newR_width为新画布宽度
 	
 	Point geoToScreen(double lat, double lon); //将地理坐标转换成屏幕坐标,返回类型为Gdiplus::Point

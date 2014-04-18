@@ -1,5 +1,5 @@
 /* 
- * Last Updated at [2014/2/10 11:13] by wuhao
+ * Last Updated at [2014/4/15 16:30] by wuhao
  */
 #include "MapDrawer.h"
 
@@ -9,6 +9,13 @@ MapDrawer::MapDrawer()
 	//GDI+ initializaton
 	GdiplusStartupInput gdiplusStartupInput;
 	GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
+
+	minLat = 0;
+	maxLat = 0;
+	minLon = 0;
+	maxLon = 0;
+	r_width = 0;
+	r_height = 0;
 }
 
 MapDrawer::~MapDrawer()
@@ -40,6 +47,12 @@ void MapDrawer::setArea(double _minLat, double _maxLat, double _minLon, double _
 
 void MapDrawer::setResolution(int width)
 {
+	if (minLat == 0 && maxLat == 0 && maxLat == 0 && maxLon == 0)
+	{
+		printf("You should set the area first!\n");
+		system("pause");
+		exit(0);
+	}
 	r_width = width;
 	double height = (maxLat - minLat) / (maxLon - minLon) * width;
 	r_height = (int)height;
@@ -53,6 +66,12 @@ void MapDrawer::setResolution(int width, int height)
 
 void MapDrawer::newBitmap()
 {
+	if (r_width == 0 || r_height == 0)
+	{
+		printf("You should set the area & resolution first!\n");
+		system("pause");
+		exit(0);
+	}
 	bm = new Bitmap(r_width, r_height, PixelFormat32bppARGB);
 }
 
@@ -70,12 +89,9 @@ void MapDrawer::unlockBits()
 
 void MapDrawer::drawPoint(Color color, int x, int y)
 {
-	if (x >= r_width || y >= r_height || x < 0 || y < 0)
+	if (!inArea(x, y))
 	{
-		printf("drawing pt(%d, %d) error, bitmap resolution is %d * %d\n",
-			x, y, r_width, r_height);
-		system("pause");
-		exit(0);
+		return; 
 	}
 	byte* row = (byte*)bmData->Scan0 + (y * bmData->Stride);
 	int x0 = x * 4;
@@ -130,14 +146,27 @@ void MapDrawer::drawBigPoint(Color color, int x, int y)
 
 void MapDrawer::drawLine(Color color, int x1, int y1, int x2, int y2)
 {
+	/*
 	if (x1 == r_width)
-		x1 = r_width;
+		x1 = r_width - 1;
 	if (x1 == -1)
 		x1 = 0;
 	if (x2 == r_width)
-		x2 = r_width;
+		x2 = r_width - 1;
 	if (x2 == -1)
 		x2 = 0;
+	if (y1 == r_height)
+		y1 = r_height - 1;
+	if (y1 == -1)
+		y1 = 0;
+	if (y2 == r_height)
+		y2 = r_height - 1;
+	if (y2 == -1)
+		y2 = 0;*/
+	if (!inArea(x1, y1) && !inArea(x2, y2))
+	{
+		return;
+	}
 	if (abs(x1 - x2) >= abs(y1 - y2))
 		bresenhamDrawLine_x(color, x1, y1, x2, y2);
 	else
@@ -146,40 +175,42 @@ void MapDrawer::drawLine(Color color, int x1, int y1, int x2, int y2)
 
 void MapDrawer::drawLine(Color color, double lat1, double lon1, double lat2, double lon2)
 {
-	if (inArea(lat1, lon1) && inArea(lat2, lon2))
+	if (!inArea(lat1, lon1) && !inArea(lat2, lon2))
 	{
-		Point pt1, pt2;
-		pt1 = geoToScreen(lat1, lon1);
-		pt2 = geoToScreen(lat2, lon2);
-		drawLine(color, pt1.X, pt1.Y, pt2.X, pt2.Y);
+		return;
 	}
+	Point pt1, pt2;
+	pt1 = geoToScreen(lat1, lon1);
+	pt2 = geoToScreen(lat2, lon2);
+	drawLine(color, pt1.X, pt1.Y, pt2.X, pt2.Y);
 }
 
 void MapDrawer::drawBoldLine(Color color, double lat1, double lon1, double lat2, double lon2)
 {
-	if (inArea(lat1, lon1) && inArea(lat2, lon2))
+	if (!inArea(lat1, lon1) && !inArea(lat2, lon2))
 	{
-		Point pt1, pt2, pt3, pt4, pt5, pt6;
-		pt1 = geoToScreen(lat1, lon1);
-		pt2 = geoToScreen(lat2, lon2);
-		drawLine(color, pt1.X, pt1.Y, pt2.X, pt2.Y);
-		pt3.X = pt1.X + 1;
-		pt5.X = pt1.X - 1;
-		pt5.Y = pt3.Y = pt1.Y;
-		pt4.X = pt2.X + 1;
-		pt6.X = pt2.X - 1;
-		pt6.Y = pt4.Y = pt2.Y;
-		drawLine(color, pt3.X, pt3.Y, pt4.X, pt4.Y);
-		drawLine(color, pt5.X, pt5.Y, pt6.X, pt6.Y);
-		pt3.Y = pt1.Y + 1;
-		pt5.Y = pt1.Y - 1;
-		pt5.X = pt3.X = pt1.X;
-		pt4.Y = pt2.Y + 1;
-		pt6.Y = pt2.Y - 1;
-		pt6.X = pt4.X = pt2.X;
-		drawLine(color, pt3.X, pt3.Y, pt4.X, pt4.Y);
-		drawLine(color, pt5.X, pt5.Y, pt6.X, pt6.Y);
+		return;
 	}
+	Point pt1, pt2, pt3, pt4, pt5, pt6;
+	pt1 = geoToScreen(lat1, lon1);
+	pt2 = geoToScreen(lat2, lon2);
+	drawLine(color, pt1.X, pt1.Y, pt2.X, pt2.Y);
+	pt3.X = pt1.X + 1;
+	pt5.X = pt1.X - 1;
+	pt5.Y = pt3.Y = pt1.Y;
+	pt4.X = pt2.X + 1;
+	pt6.X = pt2.X - 1;
+	pt6.Y = pt4.Y = pt2.Y;
+	drawLine(color, pt3.X, pt3.Y, pt4.X, pt4.Y);
+	drawLine(color, pt5.X, pt5.Y, pt6.X, pt6.Y);
+	pt3.Y = pt1.Y + 1;
+	pt5.Y = pt1.Y - 1;
+	pt5.X = pt3.X = pt1.X;
+	pt4.Y = pt2.Y + 1;
+	pt6.Y = pt2.Y - 1;
+	pt6.X = pt4.X = pt2.X;
+	drawLine(color, pt3.X, pt3.Y, pt4.X, pt4.Y);
+	drawLine(color, pt5.X, pt5.Y, pt6.X, pt6.Y);
 }
 
 Color randomColor();
@@ -232,6 +263,11 @@ void MapDrawer::saveBitmap(std::string fileName)
 bool MapDrawer::inArea(double lat, double lon)
 {
 	return (lat > minLat && lat < maxLat && lon > minLon && lon < maxLon);
+}
+
+bool MapDrawer::inArea(int x, int y)
+{
+	return (x >= 0 && x < r_width && y >= 0 && y < r_height);
 }
 
 //±±°ëÇò

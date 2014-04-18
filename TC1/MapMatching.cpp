@@ -3,8 +3,8 @@
 //运行所需的全局变量
 vector<string> outputFileNames;
 list<Traj*> trajList;
-string rootFilePath = "D:\\trajectory\\singapore_data\\singapore_map";
-Map routeNetwork = Map(rootFilePath, 1000);
+string rootFilePath = "D:\\trajectory\\singapore_data\\singapore_map\\";
+Map roadNetwork;// = Map(rootFilePath, 1000);
 //保存计算过的两点间最短距离，键pair对表示起点和终点，值pair表示两点间最短距离和对应的deltaT
 //保存的deltaT的原因是：如果deltaT过小，则返回的最短距离可能为INF；而当再遇到相同起点和终点、而deltaT变大时，最短距离可能就不是INF了
 //类似的，当已保存的最短距离不是INF，而遇到某个更小的deltaT时，最短距离可能就是INF了
@@ -64,14 +64,14 @@ list<Edge*> MapMatching(list<GeoPoint*> &trajectory, double rangeOfCandidateEdge
 		long double currentMaxProb = 1e10;//当前最大整体概率，初始值为1e10
 		vector<Score> scores = vector<Score>();//当前轨迹点的Score集合
 		vector<Edge*> canadidateEdges;//候选路段集合
-		routeNetwork.getNearEdges((*trajectoryIterator)->lat, (*trajectoryIterator)->lon, rangeOfCandidateEdges, canadidateEdges);//获得所有在指定范围内的候选路段集合
+		roadNetwork.getNearEdges((*trajectoryIterator)->lat, (*trajectoryIterator)->lon, rangeOfCandidateEdges, canadidateEdges);//获得所有在指定范围内的候选路段集合
 		long double *emissionProbs = new long double[canadidateEdges.size()];//保存这些候选路段的放射概率
 		int currentCanadidateEdgeIndex = 0;//当前候选路段的索引
 		for each (Edge* canadidateEdge in canadidateEdges)
 		{
 			int preColumnIndex = -1;//保存当前候选路段的前序路段的列索引
 			double currentDistLeft = 0;//当前轨迹点在候选路段上的投影点距路段起点的距离
-			double DistBetweenTrajPointAndEdge = routeNetwork.distMFromTransplantFromSRC((*trajectoryIterator)->lat, (*trajectoryIterator)->lon, canadidateEdge, currentDistLeft);
+			double DistBetweenTrajPointAndEdge = roadNetwork.distMFromTransplantFromSRC((*trajectoryIterator)->lat, (*trajectoryIterator)->lon, canadidateEdge, currentDistLeft);
 			//计算这些候选路段的放射概率
 			emissionProbs[currentCanadidateEdgeIndex] = deltaT*sqrt(DistBetweenTrajPointAndEdge);
 			if (!cutFlag){
@@ -101,7 +101,7 @@ list<Edge*> MapMatching(list<GeoPoint*> &trajectory, double rangeOfCandidateEdge
 							else{
 								//或者未保存给定起点和终点的最短路结果；或者当前deltaT比保存的deltaT要大，可能得到真正的最短路结果；总之就是要调用函数计算最短路
 								list<Edge*> shortestPath = list<Edge*>();
-								routeNetworkDistBetweenTwoEdges = routeNetwork.shortestPathLength(formerCanadidateEdge.edge->endNodeId, canadidateEdge->startNodeId, currentDistLeft, formerDistToEnd, deltaT);
+								routeNetworkDistBetweenTwoEdges = roadNetwork.shortestPathLength(formerCanadidateEdge.edge->endNodeId, canadidateEdge->startNodeId, currentDistLeft, formerDistToEnd, deltaT);
 								shortestDistPair[odPair] = make_pair(routeNetworkDistBetweenTwoEdges, deltaT);
 							}
 						}

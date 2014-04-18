@@ -86,11 +86,11 @@ public:
 	double gridSizeDeg;
 	double strictThreshold = 0;
 	list<Edge*>* **grid;
-	/*singapore half
+	//singapore half
 	double minLat = 1.22;
 	double maxLat = 1.5;
 	double minLon = 103.620;
-	double maxLon = 104.0;*/
+	double maxLon = 104.0;
 	
 	/*singapore full
 	double minLat = 0.99999;
@@ -100,10 +100,10 @@ public:
 
 	//washington full
 //minLat:45.559102, maxLat : 49.108823, minLon : -124.722781, maxLon : -116.846465
-	double minLat = 45.0;
+	/*double minLat = 45.0;
 	double maxLat = 49.5;
 	double minLon = -125.0;
-	double maxLon = -116.5;
+	double maxLon = -116.5;*/
 
 	int getRowId(double lat) const;
 	int getColId(double lon) const;

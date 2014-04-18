@@ -150,6 +150,8 @@
     <ClInclude Include="PolylineGenerator.h" />
     <ClInclude Include="StringOperator.h" />
     <ClInclude Include="GeoPoint.h" />
+    <ClInclude Include="TrajDrawer.h" />
+    <ClInclude Include="TrajReader.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Map.cpp" />

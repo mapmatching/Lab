@@ -27,6 +27,10 @@ void Map::open(string folderDir, int gridWidth)
 	* |-WA_EdgeGeometry.txt
 	* |-WA_Edges.txt
 	*/
+	//////////////////////////////////////////////////////////////////////////
+	///排除规则：当edge的两个端点都在area外则不加入（node和edge对应位置放NULL）
+	//////////////////////////////////////////////////////////////////////////
+	
 	this->gridWidth = gridWidth;
 	int count = 0;
 	//////////////////////////////////////////////////////////////////////////
@@ -52,7 +56,8 @@ void Map::open(string folderDir, int gridWidth)
 			pt = new GeoPoint(lat, lon);
 		else
 		{
-			pt = NULL;
+			//pt = NULL;
+			pt = new GeoPoint(lat, lon);
 			count++;
 		}
 		nodes.push_back(pt);
@@ -79,19 +84,21 @@ void Map::open(string folderDir, int gridWidth)
 	{
 		if (geometryIfs.fail())
 			break;
-		std::vector<std::string> substrs;
-		//split(strLine, "^", substrs);
+		std::vector<std::string> substrs;		
 		/*singapore ver*/
-		/*split(strLine, '^', substrs);
+		split(strLine, "^", substrs);
+		//split(strLine, '^', substrs);
 		int edgeId = atoi(substrs[0].c_str());
 		double startLat = atof(substrs[3].c_str());
+		//printf("startlat = %lf\n", startLat);
 		double startLon = atof(substrs[4].c_str());
 		double endLat = atof(substrs[substrs.size() - 2].c_str());
 		double endLon = atof(substrs[substrs.size() - 1].c_str());
-		if (!inArea(startLat, startLon) || !inArea(endLat, endLon))
+		if (!inArea(startLat, startLon) && !inArea(endLat, endLon))
 		{
-			printf("start(%lf,%lf), end(%lf,%lf)\n", startLat, startLon, endLat, endLon);
-			system("pause");
+		//	printf("start(%lf,%lf), end(%lf,%lf)\n", startLat, startLon, endLat, endLon);
+		//	printf("minlat = %lf, maxlat = %lf\n", minLat, maxLat);
+		//	system("pause");
 			edges.push_back(NULL);
 			count++;
 			continue;
@@ -102,22 +109,22 @@ void Map::open(string folderDir, int gridWidth)
 			double lat, lon;
 			lat = atof(substrs[i].c_str());
 			lon = atof(substrs[i + 1].c_str());
-			if (inArea(lat, lon))
-			{
+		//	if (inArea(lat, lon))
+		//	{
 				GeoPoint* pt = new GeoPoint(lat, lon);
 				figure->push_back(pt);
-			}
-			else
-			{
-				continueFlag = true;
-				edges.push_back(NULL);
-				count++;
-				break;
-			}
+		//	}
+			//else
+			//{
+			//	continueFlag = true;
+			//	edges.push_back(NULL);
+			//	count++;
+			//	break;
+			//}
 			
-		}*/
+		}
 		/*washington ver*/
-		split(strLine, '^', substrs);
+		/*split(strLine, '^', substrs);
 		int edgeId = atoi(substrs[0].c_str());
 		double startLat = atof(substrs[4].c_str());
 		double startLon = atof(substrs[5].c_str());
@@ -148,7 +155,8 @@ void Map::open(string folderDir, int gridWidth)
 				break;
 			}
 
-		}
+		}*/
+		///TODO: continueFlag是干啥的忘记了
 		if (continueFlag)
 		{
 			delete figure;
@@ -807,9 +815,9 @@ void Map::drawMap(Color color, MapDrawer& md)
 		{
 			if (nextPtIter == edges[i]->figure->end())
 				break;
-			md.drawLine(rndColor, (*ptIter)->lat, (*ptIter)->lon, (*nextPtIter)->lat, (*nextPtIter)->lon);
+			md.drawLine(color, (*ptIter)->lat, (*ptIter)->lon, (*nextPtIter)->lat, (*nextPtIter)->lon);
 			md.drawBigPoint(Gdiplus::Color::Black, (*ptIter)->lat, (*ptIter)->lon);
-			//md.drawBigPoint(Gdiplus::Color::Black, (*nextPtIter)->lat, (*nextPtIter)->lon);
+			md.drawBigPoint(Gdiplus::Color::Black, (*nextPtIter)->lat, (*nextPtIter)->lon);
 			ptIter++;
 			nextPtIter++;
 		}
@@ -845,10 +853,13 @@ double Map::distM_withThres(double lat, double lon, Edge* edge, double threshold
 			cout << "*iter = NULL";
 			system("pause");
 		}
-		if (!inArea(lat, lon) || !inArea((*iter)->lat, (*iter)->lon))
+		if (!inArea(lat, lon))// || !inArea((*iter)->lat, (*iter)->lon))
 		{
 			cout << "not in area";
 			printf("(lat,lon) = (%lf,%lf), iter = (%lf, %lf)\n", lat, lon, (*iter)->lat, (*iter)->lon);
+			printf("minlat = %lf, maxlat = %lf\n", minLat, maxLat);
+			printf("minlon = %lf, maxlon = %lf\n", minLon, maxLon);
+			system("pause");
 		}
 		double tmpDist = GeoPoint::distM(lat, lon, (*iter)->lat, (*iter)->lon);
 		if (tmpDist < threshold)
@@ -1014,9 +1025,31 @@ void Map::createGridIndexForSegment(Edge *edge, GeoPoint* fromPT, GeoPoint* toPt
 {
 	//////////////////////////////////////////////////////////////////////////
 	///对edge路中的fromPt->toPt段插入网格索引，经过的网格都加入其指针，如果与网格相交长度过小则不加入网格
+	///如果2个端点都在当前区域外则不加入网格，如果有一个端点在当前区域外，则加入在区域内的那个端点所在的网格
 	//////////////////////////////////////////////////////////////////////////
 	if (edge == NULL)
 		return;
+	//都不在区域内则跳过
+	if (!inArea(fromPT->lat, fromPT->lon) && !inArea(toPt->lat, toPt->lon))
+		return;
+	//以个点在区域内则只加另外一个端点所在的网格
+	//TODO:这样加索引并不准确
+	if (!inArea(fromPT->lat, fromPT->lon))
+	{
+		int row = (toPt->lat - minLat) / gridSizeDeg;
+		int col = (toPt->lon - minLon) / gridSizeDeg;
+		insertEdgeIntoGrid(edge, row, col);
+		return;
+	}
+	if (!inArea(toPt->lat, toPt->lon))
+	{
+		int row = (fromPT->lat - minLat) / gridSizeDeg;
+		int col = (fromPT->lon - minLon) / gridSizeDeg;
+		insertEdgeIntoGrid(edge, row, col);
+		return;
+	}
+	
+	
 	bool crossRow;
 	GeoPoint* pt1 = fromPT;
 	GeoPoint* pt2 = toPt;
@@ -1041,7 +1074,7 @@ void Map::createGridIndexForSegment(Edge *edge, GeoPoint* fromPT, GeoPoint* toPt
 		cout << "from node " << edge->startNodeId << " to node " << edge->endNodeId << endl;
 		cout << "inarea = " << inArea(pt2->lat, pt2->lon) << endl;
 		cout << "maxRow = " << gridHeight - 1 << " maxCol = " << gridWidth - 1 << endl;
-		//system("pause");
+		system("pause");
 		//TODO：这一坨没有仔细想过能不能这么写
 		/*if (row1 >= gridHeight)	row1 = gridHeight;
 		if (row2 >= gridHeight)	row2 = gridHeight;

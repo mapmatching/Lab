@@ -14,6 +14,8 @@
 #include "MapMatching.h"
 #include <iomanip>
 #include "PolylineGenerator.h"
+#include "TrajReader.h"
+#include "TrajDrawer.h"
 
 #define eps 1e-8
 #define INFINITE 999999999
@@ -33,7 +35,7 @@ bool zoomed = true;
 bool doExtendAndOutput = true;
 
 typedef list<GeoPoint*> Traj;
-Map roadNetwork;
+extern Map roadNetwork;
 MapDrawer md;
 
 double limitSpeed = 50; //间隔大于33m/s的prune掉
@@ -538,6 +540,73 @@ void splitSRCTrajFiles(string folderDir)
 	ofs.close();
 }
 
+void splitTrajsAndOutput(list<Traj*>& rawTrajs)
+{
+	//////////////////////////////////////////////////////////////////////////
+	///将
+	//////////////////////////////////////////////////////////////////////////
+	
+	limitSpeed = 50.0;
+	limitDist = 400;
+	limitTime = 100;
+	GeoPoint prePt, currentPt;
+	ofstream ofs("splitedTrajs.txt");
+	ofs << fixed << showpoint << setprecision(8);
+	for (list<Traj*>::iterator trajIter = rawTrajs.begin(); trajIter != rawTrajs.end(); trajIter++)
+	{
+		bool startFlag = true;
+		Traj* currentTraj = (*trajIter);
+		for (Traj::iterator ptIter = currentTraj->begin(); ptIter != currentTraj->end(); ptIter++)
+		{
+			if (startFlag)
+			{
+				if (md.inArea((*ptIter)->lat, (*ptIter)->lon))
+				{
+					ofs << (*ptIter)->time << " " << (*ptIter)->lat << " " << (*ptIter)->lon << " -1" << endl;
+					prePt.lat = (*ptIter)->lat;
+					prePt.lon = (*ptIter)->lon;
+					prePt.time = (*ptIter)->time;
+					startFlag = false;
+				}
+				else
+					continue;
+			}
+			else
+			{
+				currentPt.lat = (*ptIter)->lat;
+				currentPt.lon = (*ptIter)->lon;
+				currentPt.time = (*ptIter)->time;
+				if (md.inArea((*ptIter)->lat, (*ptIter)->lon))
+				{
+					if (!overDistLimit(&prePt, &currentPt))
+					{
+						ofs << (*ptIter)->time << " " << (*ptIter)->lat << " " << (*ptIter)->lon << " -1" << endl;
+						prePt.lat = (*ptIter)->lat;
+						prePt.lon = (*ptIter)->lon;
+						prePt.time = (*ptIter)->time;
+						startFlag = false;
+					}
+					else
+					{
+						ofs << -1 << endl;
+						ofs << (*ptIter)->time << " " << (*ptIter)->lat << " " << (*ptIter)->lon << " -1" << endl;
+						prePt.lat = (*ptIter)->lat;
+						prePt.lon = (*ptIter)->lon;
+						prePt.time = (*ptIter)->time;
+						startFlag = false;
+					}
+				}
+				else
+				{
+					ofs << -1 << endl;
+					startFlag = true;
+				}
+			}
+		}
+		if (startFlag == false)
+			ofs << -1 << endl;
+	}
+}
 //读入标准轨迹文件,格式:time lat lon mmRoadId
 void readStdTrajs(string path, list<Traj*>& dest, int num = INFINITE)
 {
@@ -2690,12 +2759,10 @@ void main()
 	int startTime = clock();
 	srand((unsigned)time(NULL));
 
-	testTCCAll();
 /**********************************************************/
 /*test code starts from here*/
 	/*Map m;
-	m.open("D:\\trajectory\\washington_data\\washington_map\\",10000);
-	system("pause");
+	m.open("D:\\trajectory\\singapore_data\\singapore_map\\", 500);
 	MapDrawer md;
 	md.setArea(m.minLat, m.maxLat, m.minLon, m.maxLon);
 	md.setResolution(15000);
@@ -2703,7 +2770,7 @@ void main()
 	md.lockBits();
 	m.drawMap(Color::Blue, md);
 	md.unlockBits();
-	md.saveBitmap("washington.png");
+	md.saveBitmap("singapore.png");
 	system("pause");
 	exit(0);*/
 	/*test code ends*/
@@ -2755,13 +2822,15 @@ void main()
 	
 	/*zooming part start*/
 	zoomed = true;
+	double zoomingRate;
 	if (zoomed)
 	{
 		//int zoomWide = 800;
 		//int zoomHeight = 600;
 		int zoomWide = 1600;
 		int zoomHeight = 1300;
-		gridWidth = int(double(zoomWide) / double(size) * double(gridWidth));
+		zoomingRate = (double)zoomWide / (double)size;
+		gridWidth = int(zoomingRate * double(gridWidth));
 		size = 5000;
 		//md.zoomIn(8900, 7150, zoomWide, zoomHeight, size);
 		md.zoomIn(6500, 6800, zoomWide, zoomHeight, size);
@@ -2772,11 +2841,26 @@ void main()
 		maxLon = md.maxLon;		
 	}
 	/*zooming part end*/
+	
+	/**********************************************************/
+	/*test code starts from here*/
+	/*Map m;
+	m.setArea(md);
+	m.open("D:\\trajectory\\singapore_data\\singapore_map\\", (int)(500.0 * 1600.0 / 15000.0));
+	md.newBitmap();
+	md.lockBits();
+	m.drawMap(Color::Blue, md);
+	md.unlockBits();
+	md.saveBitmap("singapore.png");
+	system("pause");
+	exit(0);*/
+	/*test code ends*/
+	/**********************************************************/
 
 	roadNetwork.setArea(md);
-	roadNetwork.open("D:\\trajectory\\singapore_data\\singapore_map\\", (int)(500.0 * 1600.0/ 15000.0));
+	roadNetwork.open("D:\\trajectory\\singapore_data\\singapore_map\\", (int)(500.0 * zoomingRate));
 	printf("\n");
-	trajDir += "4000\\";
+	//trajDir += "4000\\"; //老版本文件结构，已弃用
 
 /*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑initialization end↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
 
@@ -2807,7 +2891,7 @@ void main()
 	}
 
 	/*画出十字路口点*/
-	if (1)
+	if (0)
 	{
 		trajFileName = "20110102_03.txt";
 		readStdTrajs(trajDir + trajFileName, tempTrajs);
@@ -2870,17 +2954,29 @@ void main()
 /////////////////////////////////读入轨迹文件///////////////////////////////////////
 	//trajFileName = "wy_extended_unmatched_trajs_smallarea.txt";
 	//trajFileName = "splitedTrajs.txt";
+	//trajFileName = "20110102_03.txt";
 	trajFileName = "wy_MMTrajs.txt";
-	readStdTrajs(trajDir + trajFileName, trajs);
-	cout << "extacted unmatched traj's size = " << trajs.size() << endl;
+	//readStdTrajs(trajDir + trajFileName, trajs);
+	TrajReader tReader(trajDir + trajFileName);
+	tReader.readTrajs(tempTrajs);
+
+	//cout << "extacted unmatched traj's size = " << trajs.size() << endl;
 //////////////////////////////////////////////////////////////////////////////////
 
+	/*读入原始轨迹，然后将过长的切断输出至"splitedTrajs.txt"*/
+	if (0)
+	{
+		splitTrajsAndOutput(tempTrajs);
+		system("pause");
+		exit(0);
+	}
+	
 
 	/*MM using viterbi and output in Project Folder*/	
 	if (0)
 	{
 		bool doOutput = true;
-		MM(trajs, doOutput);
+		MM(tempTrajs, doOutput);
 		system("pause");
 		exit(0);
 	}
@@ -2889,17 +2985,19 @@ void main()
 	/**********************************************************/
 	/*test code starts from here*/
 	//画使用viterbi MM后的轨迹点
-	if (1)
+	if (0)
 	{
 		md.newBitmap();
 		md.lockBits();
 		md.drawMap(Color::Blue, mapFilePath);
-		cout << trajs.size() << endl;
-		drawTrajPts(trajs);
+		cout << tempTrajs.size() << endl;
+		TrajDrawer td;
+		td.drawMMTrajs(tempTrajs, md, Color::Red, false, false, false, true);
+		//drawTrajPts(trajs);
 		//createGridIndex(createGridIndexForOneTraj);
 		//drawGridLine(Color::Green);
 		md.unlockBits();
-		md.saveBitmap("shzrjj.png");
+		md.saveBitmap("wymmtrajs.png");
 		system("pause");
 		exit(0);
 	}	
