@@ -289,18 +289,30 @@ void doExtendForOneMMTraj(Traj* traj, list<Traj*>& dest, double extendDistM, dou
 				if (startFlag)
 				{
 					tmpTraj = new Traj();
-					//tmpTraj->push_front(currentPt);
 					//向前扩展
+					//4/21修改：新版本，最多只扩一次
+					Traj::iterator frontExtendPtIter = currentPtIter;
+					if (frontExtendPtIter != rawTraj->begin())
+					{
+						frontExtendPtIter--;
+						GeoPoint* frontExtendPt = (*frontExtendPtIter);
+						if (md.inArea(frontExtendPt->lat, frontExtendPt->lon)
+						 && !overDistLimit(frontExtendPt, currentPt)
+		                 &&	roadNetwork.getNearEdges(frontExtendPt->lat, frontExtendPt->lon, extendDistM).size() > 0)
+							tmpTraj->push_front(frontExtendPt);
+					}
+					/*
+					//下段代码是原版本，一直延伸到附近有路为止
 					GeoPoint* extendPt = currentPt, *preExtendPt = currentPt;
 					Traj::iterator extendPtIter = currentPtIter;
 					while (md.inArea(extendPt->lat, extendPt->lon)//扩展点在区域内
 						&& !overDistLimit(preExtendPt, extendPt)) //扩展点离前一个扩展点距离不长
 						
 					{
-						tmpTraj->push_front(extendPt);
+						
 						if (roadNetwork.getNearEdges(extendPt->lat, extendPt->lon, extendDistM).size() > 0)
 						//[注意]该语句可能会产生内存泄露			
-							break;
+							tmpTraj->push_front(extendPt);
 						preExtendPt = extendPt;
 						if (extendPtIter != rawTraj->begin())
 						{
@@ -309,7 +321,7 @@ void doExtendForOneMMTraj(Traj* traj, list<Traj*>& dest, double extendDistM, dou
 						}
 						else
 							break;
-					} //while end
+					} //while end*/
 					startFlag = false;
 				} //if (startFlag) end
 				else
@@ -323,6 +335,19 @@ void doExtendForOneMMTraj(Traj* traj, list<Traj*>& dest, double extendDistM, dou
 			if (!startFlag)
 			{
 				//向后扩展
+				//4/21修改：新版本，最多只扩一次
+				Traj::iterator backExtendIter = currentPtIter;
+				backExtendIter++;
+				if (backExtendIter != rawTraj->end())
+				{
+					GeoPoint* backExtendPt = (*backExtendIter);
+					if (md.inArea(backExtendPt->lat, backExtendPt->lon)
+						&& !overDistLimit(backExtendPt, currentPt)
+						&& roadNetwork.getNearEdges(backExtendPt->lat, backExtendPt->lon, extendDistM).size() > 0)
+						tmpTraj->push_back(backExtendPt);
+				}
+				/*
+				//下段代码是原版本，一直延伸到附近有路为止
 				GeoPoint* extendPt = currentPt, *preExtendPt = tmpTraj->back();
 				Traj::iterator extendPtIter = currentPtIter;
 				while (extendPtIter != rawTraj->end() //扩展点没到尾
@@ -335,7 +360,8 @@ void doExtendForOneMMTraj(Traj* traj, list<Traj*>& dest, double extendDistM, dou
 					preExtendPt = extendPt;
 					extendPtIter++;
 					extendPt = (*extendPtIter);
-				}
+				}*/
+
 				if (tmpTraj->size() > 1)
 				{
 					dest.push_back(tmpTraj);
@@ -361,7 +387,7 @@ void doExtendForOneMMTraj(Traj* traj, list<Traj*>& dest, double extendDistM, dou
 	}
 }
 
-void doExtend(list<Traj*>& src, list<Traj*>& dest, double extendDistM, bool doOutput = false)
+void doExtend(list<Traj*>& src, list<Traj*>& dest, double extendDistM, double minTrajLength, bool doOutput = false)
 {
 	//////////////////////////////////////////////////////////////////////////
 	///读入src, src必须为MM后的轨迹集合
@@ -370,7 +396,6 @@ void doExtend(list<Traj*>& src, list<Traj*>& dest, double extendDistM, bool doOu
 	///[附加]当轨迹距离长度低于minTrajLengthM的话则丢弃
 	//////////////////////////////////////////////////////////////////////////
 	ofstream ofs;
-	double minTrajLength = 50;
 	if (doOutput)
 	{
 		ofs.open("extended_unmatched_trajs.txt");
@@ -2866,19 +2891,19 @@ void main()
 
 	/*一条龙*/
 	//用来测试调整doExtend中使用的到的三个limit参数
-	if (1)
+	if (0)
 	{
 		//limitSpeed = 50; //间隔大于50m/s的prune掉
-		//limitDist = 400; //轨迹点之间超过300m的prune掉
+		limitDist = 300; //轨迹点之间超过300m的prune掉
 		//limitTime = 100; //采样间隔大于60秒的prune掉
-		double minTrajDist = 50; //这个值没用的，要到doExtend里面设置
-		double extendDist = 15;
+		double minTrajDist = 50;
+		double extendDist = 25;
 		trajFileName = "wy_MMTrajs.txt";
 		//readStdTrajs(trajDir + trajFileName, tempTrajs);
 		TrajReader tReader(trajDir + trajFileName);
-		tReader.readTrajs(tempTrajs, 1000);
+		tReader.readTrajs(tempTrajs);
 		list<Traj*> extendTrajs;
-		doExtend(tempTrajs, extendTrajs, extendDist, true);
+		doExtend(tempTrajs, extendTrajs, extendDist, minTrajDist, true);
 		//画
 		md.newBitmap();
 		md.lockBits();
@@ -2936,7 +2961,9 @@ void main()
 		for (int i = 0; i < trajFolders.size(); i++)
 			scanTrajFolder(trajFolders[i], readSRCTrajs);
 		cout << "raw trajs's size = " << rawTrajs.size() << endl;
-		doExtend(rawTrajs, tempTrajs, true);
+		double minTrajLength = 50;
+		double extendDist = 15;
+		doExtend(rawTrajs, tempTrajs, extendDist, minTrajLength, true);
 		system("pause");
 		exit(0);
 	}
@@ -2954,13 +2981,13 @@ void main()
 	}
 
 /////////////////////////////////读入轨迹文件///////////////////////////////////////
-	//trajFileName = "wy_extended_unmatched_trajs_smallarea.txt";
+	trajFileName = "wy_extended_unmatched_trajs_smallarea.txt";
 	//trajFileName = "splitedTrajs.txt";
 	//trajFileName = "20110102_03.txt";
-	trajFileName = "wy_MMTrajs.txt";
-	//readStdTrajs(trajDir + trajFileName, trajs);
-	TrajReader tReader(trajDir + trajFileName);
-	tReader.readTrajs(tempTrajs);
+	//trajFileName = "wy_MMTrajs.txt";
+	readStdTrajs(trajDir + trajFileName, trajs);
+	//TrajReader tReader(trajDir + trajFileName);
+	//tReader.readTrajs(tempTrajs);
 
 	//cout << "extacted unmatched traj's size = " << trajs.size() << endl;
 //////////////////////////////////////////////////////////////////////////////////
@@ -3060,7 +3087,9 @@ void main()
 	/*test code ends*/
 	/**********************************************************/
 	
-
+	//////////////////////////////////////////////////////////////////////////
+	///Core Part
+	//////////////////////////////////////////////////////////////////////////
 	//drawing part
 	cout << ">> start drawing..." << endl;
 	md.newBitmap();
