@@ -250,7 +250,7 @@ double trajDistM(Traj* traj, double thresholdM = INFINITE)
 void doExtendForOneMMTraj(Traj* traj, list<Traj*>& dest, double extendDistM, double minTrajLength)
 {
 	//////////////////////////////////////////////////////////////////////////
-	///对一条已经MM过的轨迹进行切割,挑出匹配失败的子轨迹存入dest,并且两端延伸至extendDist范围内有路
+	///4/21修改：轨迹两端只延伸一次，如果延伸后的点extendDistM内有路则保留，否则不延伸
 	///如果子轨迹只有一个点则丢弃
 	///[补充] 当轨迹长度小于minTrajLength的话就丢弃
 	//////////////////////////////////////////////////////////////////////////
@@ -370,7 +370,7 @@ void doExtend(list<Traj*>& src, list<Traj*>& dest, double extendDistM, bool doOu
 	///[附加]当轨迹距离长度低于minTrajLengthM的话则丢弃
 	//////////////////////////////////////////////////////////////////////////
 	ofstream ofs;
-	double minTrajLength = 100;
+	double minTrajLength = 50;
 	if (doOutput)
 	{
 		ofs.open("extended_unmatched_trajs.txt");
@@ -2866,15 +2866,17 @@ void main()
 
 	/*一条龙*/
 	//用来测试调整doExtend中使用的到的三个limit参数
-	if (0)
+	if (1)
 	{
-		limitSpeed = 50; //间隔大于33m/s的prune掉
-		limitDist = 400; //轨迹点之间超过300m的prune掉
-		limitTime = 100; //采样间隔大于60秒的prune掉
-		double minTrajDist = 40;
-		double extendDist = 30;
+		//limitSpeed = 50; //间隔大于50m/s的prune掉
+		//limitDist = 400; //轨迹点之间超过300m的prune掉
+		//limitTime = 100; //采样间隔大于60秒的prune掉
+		double minTrajDist = 50; //这个值没用的，要到doExtend里面设置
+		double extendDist = 15;
 		trajFileName = "wy_MMTrajs.txt";
-		readStdTrajs(trajDir + trajFileName, tempTrajs);
+		//readStdTrajs(trajDir + trajFileName, tempTrajs);
+		TrajReader tReader(trajDir + trajFileName);
+		tReader.readTrajs(tempTrajs, 1000);
 		list<Traj*> extendTrajs;
 		doExtend(tempTrajs, extendTrajs, extendDist, true);
 		//画
@@ -2885,7 +2887,7 @@ void main()
 		drawGridLine(Color::Green);
 		md.drawMap(Color::Blue, mapFilePath);
 		md.unlockBits();
-		md.saveBitmap("map.png");
+		md.saveBitmap("testExtend.png");
 		system("pause");
 		exit(0);		
 	}
