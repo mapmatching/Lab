@@ -1,5 +1,5 @@
 /* 
- * Last Updated at [2014/2/24 14:35] by wuhao
+ * Last Updated at [2014/4/23 10:39] by wuhao
  */
 #include "Map.h"
 
@@ -771,7 +771,7 @@ void Map::delEdge(int edgeId)
 	//这个不能用
 }
 
-Color randomColor();
+Gdiplus::Color randomColor();
 
 void Map::getMinMaxLatLon(string nodeFilePath)
 {
@@ -802,7 +802,7 @@ void Map::getMinMaxLatLon(string nodeFilePath)
 	nodeIfs.close();
 }
 
-void Map::drawMap(Color color, MapDrawer& md)
+void Map::drawMap(Gdiplus::Color color, MapDrawer& md)
 {
 	for (int i = 0; i < edges.size(); i++)
 	{
@@ -810,7 +810,7 @@ void Map::drawMap(Color color, MapDrawer& md)
 			continue;
 		Figure::iterator ptIter = edges[i]->figure->begin(), nextPtIter = ptIter;                                                     
 		nextPtIter++;
-		Color rndColor = randomColor();
+		Gdiplus::Color rndColor = randomColor();
 		while (1)
 		{
 			if (nextPtIter == edges[i]->figure->end())

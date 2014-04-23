@@ -147,6 +147,7 @@
     <ClInclude Include="Map.h" />
     <ClInclude Include="MapDrawer.h" />
     <ClInclude Include="MapMatching.h" />
+    <ClInclude Include="Matrix.h" />
     <ClInclude Include="PolylineGenerator.h" />
     <ClInclude Include="StringOperator.h" />
     <ClInclude Include="GeoPoint.h" />

@@ -16,6 +16,7 @@
 #include "PolylineGenerator.h"
 #include "TrajReader.h"
 #include "TrajDrawer.h"
+#include "Matrix.h"
 
 #define eps 1e-8
 #define INFINITE 999999999
@@ -74,7 +75,7 @@ list<Figure*> gennedEgdes;
 
 //函数声明
 bool overDistLimit(GeoPoint* pt1, GeoPoint* pt2);
-void drawOneTraj(Color color, Traj* traj);
+void drawOneTraj(Gdiplus::Color color, Traj* traj);
 bool smallerInX(simplePoint& pt1, simplePoint& pt2);
 
 string getMMFileName(string fileName)
@@ -1145,31 +1146,31 @@ void createGridIndexForOneTraj(IndexedTraj *iTraj)
 }
 
 //drawer
-Color genColor(int i)
+Gdiplus::Color genColor(int i)
 {
 	switch (i % 10)
 	{
-	case 1: return Color::Red;
-	case 2: return Color::Green;
-	case 3: return Color::Blue;
-	case 4: return Color::Yellow;
-	case 5: return Color::Aqua;
-	case 6: return Color::Pink;
-	case 7: return Color::Gray;
-	case 8: return Color::Brown;
-	case 9: return Color::Gold;
-	case 10: return Color::Purple;
+	case 1: return Gdiplus::Color::Red;
+	case 2: return Gdiplus::Color::Green;
+	case 3: return Gdiplus::Color::Blue;
+	case 4: return Gdiplus::Color::Yellow;
+	case 5: return Gdiplus::Color::Aqua;
+	case 6: return Gdiplus::Color::Pink;
+	case 7: return Gdiplus::Color::Gray;
+	case 8: return Gdiplus::Color::Brown;
+	case 9: return Gdiplus::Color::Gold;
+	case 10: return Gdiplus::Color::Purple;
 	default:
 		break;
 	}
 }
 
-Color randomColor()
+Gdiplus::Color randomColor()
 {
 	int r = int(((double)rand()) / RAND_MAX * 255);
 	int g = int(((double)rand()) / RAND_MAX * 255);
 	int b = int(((double)rand()) / RAND_MAX * 255);
-	Color color((byte)r, (byte)g, (byte)b);
+	Gdiplus::Color color((byte)r, (byte)g, (byte)b);
 	return color;
 }
 
@@ -1178,7 +1179,7 @@ void drawGridLine(Gdiplus::Color color)
 	//////////////////////////////////////////////////////////////////////////
 	///在图片上画出网格线 
 	//////////////////////////////////////////////////////////////////////////
-	ARGB argb = Color::MakeARGB(90, color.GetR(), color.GetG(), color.GetB());
+	Gdiplus::ARGB argb = Gdiplus::Color::MakeARGB(90, color.GetR(), color.GetG(), color.GetB());
 	color.SetValue(argb);
 	double delta = 0.0000001;
 	for (int i = 0; i < gridHeight; i++)
@@ -1240,7 +1241,7 @@ void drawAllTrajs(std::string folderDir, std::string fileName)
 	//fclose(fpOut);
 }
 
-void drawTrajs(Color color, list<Traj*> trajs, bool drawInterPt, bool boldLine)
+void drawTrajs(Gdiplus::Color color, list<Traj*> trajs, bool drawInterPt, bool boldLine)
 {
 	//////////////////////////////////////////////////////////////////////////
 	///<重载> 画trajs中的所有轨迹,集合为list集合,元素为Traj*
@@ -1272,7 +1273,7 @@ void drawTrajs(Color color, list<Traj*> trajs, bool drawInterPt, bool boldLine)
 	}
 }
 
-void drawTrajs(Color color, vector<IndexedTraj*> trajs, bool drawInterPt, bool boldLine)
+void drawTrajs(Gdiplus::Color color, vector<IndexedTraj*> trajs, bool drawInterPt, bool boldLine)
 {
 	//////////////////////////////////////////////////////////////////////////
 	///<重载> 画trajs中的所有轨迹,集合为vector集合,元素为IndexedTraj*
@@ -1302,7 +1303,7 @@ void drawTrajs(Color color, vector<IndexedTraj*> trajs, bool drawInterPt, bool b
 	}
 }
 
-void drawTrajs(Color color, list<IndexedTraj*> trajs, bool drawInterPt, bool boldLine)
+void drawTrajs(Gdiplus::Color color, list<IndexedTraj*> trajs, bool drawInterPt, bool boldLine)
 {
 	//////////////////////////////////////////////////////////////////////////
 	///<重载> 画trajs中的所有轨迹,集合为list集合,元素为IndexedTraj*
@@ -1332,7 +1333,7 @@ void drawTrajs(Color color, list<IndexedTraj*> trajs, bool drawInterPt, bool bol
 	}
 }
 
-void drawOneTraj(Color color, Traj* traj)
+void drawOneTraj(Gdiplus::Color color, Traj* traj)
 {
 	/************************************************************************/
 	/*以color色画一条轨迹,轨迹类型为list<GeoPoint*>*                           */
@@ -1368,7 +1369,7 @@ void drawClusteredTrajs()
 			continue;
 		if (clusters[i]->size() > 0)
 		{
-			Color color = randomColor();
+			Gdiplus::Color color = randomColor();
 			for (Cluster::iterator iTrajIter = clusters[i]->begin(); iTrajIter != clusters[i]->end(); iTrajIter++)
 			{
 				drawOneTraj(color, (*iTrajIter)->traj);
@@ -1386,17 +1387,17 @@ void drawPolyline(PolylineGenerator pg)
 	cout << "polysize before drawing " << pg.polyline.size() << endl;
 	for (int i = 0; i < pg.polyline.size() - 1; i++)
 	{
-		md.drawLine(Color::Green, (int)pg.polyline[i].x, (int)pg.polyline[i].y, (int)pg.polyline[i + 1].x, (int)pg.polyline[i + 1].y);
+		md.drawLine(Gdiplus::Color::Green, (int)pg.polyline[i].x, (int)pg.polyline[i].y, (int)pg.polyline[i + 1].x, (int)pg.polyline[i + 1].y);
 	}
 	for (int i = 0; i < pg.polyline.size(); i++)
 	{
-		md.drawBigPoint(Color::Blue, (int)pg.polyline[i].x, (int)pg.polyline[i].y);
+		md.drawBigPoint(Gdiplus::Color::Blue, (int)pg.polyline[i].x, (int)pg.polyline[i].y);
 	}
 }
 
 void drawAllGennedEdges()
 {
-	drawTrajs(Color::Black, gennedEgdes, true, true);
+	drawTrajs(Gdiplus::Color::Black, gennedEgdes, true, true);
 }
 
 int extendAndSplitEdge(GeoPoint* prePt, GeoPoint* succPt, double threshold, bool& onExtend)
@@ -1652,7 +1653,7 @@ Edge* genPolyLine(Cluster& cluster)
 		for each (GeoPoint* gPt in *(iTraj->traj))
 		{
 			Pt tmpPt;
-			Point gdiPt = md.geoToScreen(gPt->lat, gPt->lon);
+			Gdiplus::Point gdiPt = md.geoToScreen(gPt->lat, gPt->lon);
 			tmpPt.x = (double)gdiPt.X;
 			tmpPt.y = (double)gdiPt.Y;
 			pts.push_back(tmpPt);
@@ -1663,8 +1664,8 @@ Edge* genPolyLine(Cluster& cluster)
 	{
 		pg.optimization_();
 	}
-	//drawPolyline(pg);
-	Edge* newEdge = addNewPolyLineIntoMap(pg);
+	drawPolyline(pg);
+	/*Edge* newEdge = addNewPolyLineIntoMap(pg);
 	//删除cluster中的轨迹以及清空cluster
 	//[TODO]不确定这么做好不好
 	for each(IndexedTraj* iTraj in cluster)
@@ -1675,7 +1676,7 @@ Edge* genPolyLine(Cluster& cluster)
 	}
 	cluster.clear();
 	gennedEgdes.push_back(newEdge->figure);
-	return newEdge;
+	return newEdge;*/
 	//map.drawMap(Color::Blue, md);
 	//reMap matching
 	/*list<Edge*> result;
@@ -1746,7 +1747,7 @@ double dist_old(GeoPoint* pt, Traj* traj)
 double distM(GeoPoint* pt, Traj* traj)
 {
 	//////////////////////////////////////////////////////////////////////////
-	///返回点pt到traj的距离
+	///返回点pt到traj的距离,单位为m
 	///距离定义为：min(点到可投影边的投影距离，点到所有形状点的欧氏距离)
 	//////////////////////////////////////////////////////////////////////////
 	double minDist = 9999;
@@ -1811,7 +1812,6 @@ double hausdorffDist(Traj* traj1, Traj* traj2, double threshold)
 	///如果计算过程中发现已经超过threshold米,则直接返回
 	//////////////////////////////////////////////////////////////////////////
 	double maxDist = -1.0;
-	double thresholdDeg = threshold;
 	//第一条到第二条
 	for (Traj::iterator iter = traj1->begin(); iter != traj1->end(); iter++)
 	{
@@ -1819,7 +1819,7 @@ double hausdorffDist(Traj* traj1, Traj* traj2, double threshold)
 		if (tmpDist > maxDist)
 		{
 			maxDist = tmpDist;
-			if (maxDist > thresholdDeg)
+			if (maxDist > threshold)
 				return maxDist;
 		}
 	}
@@ -1830,7 +1830,7 @@ double hausdorffDist(Traj* traj1, Traj* traj2, double threshold)
 		if (tmpDist > maxDist)
 		{
 			maxDist = tmpDist;
-			if (maxDist > thresholdDeg)
+			if (maxDist > threshold)
 				return maxDist;
 		}
 	}
@@ -1896,6 +1896,18 @@ void getNearTrajs(Traj* traj, double thresholdM, list<IndexedTraj*>& dest)
 				if ((*iter)->flag != visitFlag)
 				{
 					(*iter)->flag = visitFlag; //标记为已访问
+					
+					/**********************************************************/
+					/*test code starts from here*/
+					if ((*iter)->lengthM() < 200)
+					{
+						continue;
+					}
+					
+					/*test code ends*/
+					/**********************************************************/
+					
+					
 					dest.push_back((*iter));
 				}
 			}
@@ -1949,7 +1961,7 @@ void doCluster_v2(IndexedTraj* iTraj)
 	if (iTraj->traj == NULL)
 		return;
 	list<IndexedTraj*> nearTrajs;
-	getNearTrajs(iTraj->traj, clusterDist, nearTrajs);
+	getNearTrajs(iTraj->traj, clusterDist, nearTrajs); //获得iTraj周围附近的轨迹
 	double minDist = INFINITE;
 	list<Cluster*> mergeClusters;
 	for each (IndexedTraj* candidateITraj in nearTrajs)
@@ -1959,7 +1971,7 @@ void doCluster_v2(IndexedTraj* iTraj)
 			double dist = hausdorffDist(iTraj->traj, candidateITraj->traj, clusterDist);
 			if (dist < clusterDist)
 			{
-				mergeClusters.push_back(candidateITraj->cluster);
+				mergeClusters.push_back(candidateITraj->cluster);//同一cluster可重复放入，没关系的
 			}
 		}
 	}
@@ -2004,7 +2016,7 @@ void reMM_and_Cluster(Edge* newEdge)
 		{
 			if ((*edgeIter) != NULL) //匹配成功
 			{
-				md.drawBigPoint(Color::Green, (*ptIter)->lat, (*ptIter)->lon);
+				md.drawBigPoint(Gdiplus::Color::Green, (*ptIter)->lat, (*ptIter)->lon);
 				if ((*edgeIter)->id != (*ptIter)->mmRoadId)
 				{
 					(*ptIter)->mmRoadId = (*edgeIter)->id;
@@ -2013,7 +2025,7 @@ void reMM_and_Cluster(Edge* newEdge)
 			}
 			else //匹配失败
 			{
-				md.drawBigPoint(Color::Red, (*ptIter)->lat, (*ptIter)->lon);
+				md.drawBigPoint(Gdiplus::Color::Red, (*ptIter)->lat, (*ptIter)->lon);
 				if ((*ptIter)->mmRoadId != -1)
 				{
 					(*ptIter)->mmRoadId = -1;
@@ -2029,8 +2041,8 @@ void reMM_and_Cluster(Edge* newEdge)
 		if (mmRoadChanged)
 		{
 			doExtendForOneMMTraj(candidateITraj->traj, newTrajs, 20, 30);
-			drawOneTraj(Color::Aqua, candidateITraj->traj);
-			drawTrajs(Color::Red, newTrajs, false, false);
+			drawOneTraj(Gdiplus::Color::Aqua, candidateITraj->traj);
+			drawTrajs(Gdiplus::Color::Red, newTrajs, false, false);
 			//********recluster*******
 				//先把原来老的轨迹删除
 			candidateITraj->cluster->remove(candidateITraj);
@@ -2084,7 +2096,7 @@ void reMM_and_Cluster_v2(Edge* newEdge)
 		{
 			if ((*edgeIter) != NULL) //匹配成功
 			{
-				md.drawBigPoint(Color::Green, (*ptIter)->lat, (*ptIter)->lon);
+				md.drawBigPoint(Gdiplus::Color::Green, (*ptIter)->lat, (*ptIter)->lon);
 				if ((*edgeIter)->id != (*ptIter)->mmRoadId)
 				{
 					(*ptIter)->mmRoadId = (*edgeIter)->id;
@@ -2093,7 +2105,7 @@ void reMM_and_Cluster_v2(Edge* newEdge)
 			}
 			else //匹配失败
 			{
-				md.drawBigPoint(Color::Red, (*ptIter)->lat, (*ptIter)->lon);
+				md.drawBigPoint(Gdiplus::Color::Red, (*ptIter)->lat, (*ptIter)->lon);
 				if ((*ptIter)->mmRoadId != -1)
 				{
 					(*ptIter)->mmRoadId = -1;
@@ -2148,7 +2160,7 @@ void reMM_and_Cluster_v2(Edge* newEdge)
 			if (currentITraj->cluster->size() > 6)
 			{
 				newRoadGenned = true;
-				drawTrajs(Color::Green, *(currentITraj->cluster), true, false);
+				drawTrajs(Gdiplus::Color::Green, *(currentITraj->cluster), true, false);
 				cout << "有子路生成!" << endl;
 				Edge* newSubEdge = genPolyLine(*(currentITraj->cluster));
 				//ReMM
@@ -2169,7 +2181,7 @@ void reMM_and_Cluster_v2(Edge* newEdge)
 					{
 						if ((*edgeIter) != NULL) //匹配成功
 						{
-							md.drawBigPoint(Color::Green, (*ptIter)->lat, (*ptIter)->lon);
+							md.drawBigPoint(Gdiplus::Color::Green, (*ptIter)->lat, (*ptIter)->lon);
 							if ((*edgeIter)->id != (*ptIter)->mmRoadId)
 							{
 								(*ptIter)->mmRoadId = (*edgeIter)->id;
@@ -2178,7 +2190,7 @@ void reMM_and_Cluster_v2(Edge* newEdge)
 						}
 						else //匹配失败
 						{
-							md.drawBigPoint(Color::Red, (*ptIter)->lat, (*ptIter)->lon);
+							md.drawBigPoint(Gdiplus::Color::Red, (*ptIter)->lat, (*ptIter)->lon);
 							if ((*ptIter)->mmRoadId != -1)
 							{
 								(*ptIter)->mmRoadId = -1;
@@ -2324,7 +2336,7 @@ void doCluster(vector<IndexedTraj*>& trajs)
 				destCluster->splice(destCluster->end(), *srcCluster);
 				if (destCluster->size() > supportThreshold)
 				{
-					drawTrajs(Color::Red, *destCluster, true, false);
+					drawTrajs(Gdiplus::Color::Red, *destCluster, true, false);
 					genPolyLine(*destCluster);
 					return;
 				}				
@@ -2395,13 +2407,13 @@ void core()
 				doCluster(trajs[k]);
 				if (trajs[k]->cluster->size() > supportThreshold)
 				{
-					drawTrajs(Color::Red, *(trajs[k]->cluster), true, false);
+					drawTrajs(Gdiplus::Color::Red, *(trajs[k]->cluster), true, false);
 					reMM_and_Cluster(genPolyLine(*(trajs[k]->cluster)));
 					newEdgeCount++;
 					//TODO: need test!
 					if (newEdgeCount == 6)
 					{
-						roadNetwork.drawMap(Color::Blue, md);
+						roadNetwork.drawMap(Gdiplus::Color::Blue, md);
 						drawAllGennedEdges();
 						drawClusteredTrajs();
 						return;
@@ -2410,7 +2422,7 @@ void core()
 			}
 		} // end for (int k = 0; k < trajs.size(); k++)
 	}
-	roadNetwork.drawMap(Color::Blue, md);
+	roadNetwork.drawMap(Gdiplus::Color::Blue, md);
 	drawClusteredTrajs();
 }
 
@@ -2420,7 +2432,8 @@ void core_v2()
 	///改进版本
 	//////////////////////////////////////////////////////////////////////////
 	clusterDist = 25;
-	cout << "doing core2 func..." << endl;
+	supportThreshold = 5;
+	cout << ">> doing core2 func..." << endl;
 	//initialization
 	//初始状态每条轨迹都是一个cluster
 	for (int i = 0; i < trajs.size(); i++)
@@ -2448,24 +2461,28 @@ void core_v2()
 				doCluster_v2(trajs[k]);
 				if (trajs[k]->cluster->size() > supportThreshold)
 				{
-					drawTrajs(Color::Red, *(trajs[k]->cluster), true, false);
-					reMM_and_Cluster_v2(genPolyLine(*(trajs[k]->cluster)));
+					
+					//system("pause");
+					//return;
+					//reMM_and_Cluster_v2(genPolyLine(*(trajs[k]->cluster)));
 					newEdgeCount++;
 					//TODO: need test!
-					/*if (newEdgeCount == 10)
+					if (newEdgeCount == 5)
 					{
-						map.drawMap(Color::Blue, md);
-						drawAllGennedEdges();
+						drawTrajs(Gdiplus::Color::Red, *(trajs[k]->cluster), true, false);
+						genPolyLine(*(trajs[k]->cluster));
+						//map.drawMap(Color::Blue, md);
+						//drawAllGennedEdges();
 						//drawClusteredTrajs();
 						return;
-					}*/
+					}
 				}
 			}
 		} // end for (int k = 0; k < trajs.size(); k++)
 	}
-	roadNetwork.drawMap(Color::Blue, md);
+	roadNetwork.drawMap(Gdiplus::Color::Blue, md);
 	drawAllGennedEdges();
-	roadNetwork.drawMap(Color::Blue, md);
+	roadNetwork.drawMap(Gdiplus::Color::Blue, md);
 	//drawClusteredTrajs();
 }
 
@@ -2478,11 +2495,11 @@ void drawTrajPts(vector<IndexedTraj*>& trajs)
 		{
 			if ((*ptIter)->mmRoadId != -1) //匹配成功
 			{
-				md.drawPoint(Color::Green, (*ptIter)->lat, (*ptIter)->lon);
+				md.drawPoint(Gdiplus::Color::Green, (*ptIter)->lat, (*ptIter)->lon);
 			}
 			else //匹配失败
 			{
-				md.drawPoint(Color::Red, (*ptIter)->lat, (*ptIter)->lon);
+				md.drawPoint(Gdiplus::Color::Red, (*ptIter)->lat, (*ptIter)->lon);
 			}
 		}
 	}
@@ -2617,20 +2634,20 @@ void testTCC()
 	//draw pts
 	for each (Pt pt in pts)
 	{
-		md.drawBigPoint(Color::Black, int(pt.x), int(pt.y));
-		md.drawBigPoint(Color::Black, int(pt.x) + 1, int(pt.y) + 1);
-		md.drawBigPoint(Color::Black, int(pt.x) - 1, int(pt.y) + 1);
-		md.drawBigPoint(Color::Black, int(pt.x) + 1, int(pt.y) - 1);
-		md.drawBigPoint(Color::Black, int(pt.x) - 1, int(pt.y) - 1);
+		md.drawBigPoint(Gdiplus::Color::Black, int(pt.x), int(pt.y));
+		md.drawBigPoint(Gdiplus::Color::Black, int(pt.x) + 1, int(pt.y) + 1);
+		md.drawBigPoint(Gdiplus::Color::Black, int(pt.x) - 1, int(pt.y) + 1);
+		md.drawBigPoint(Gdiplus::Color::Black, int(pt.x) + 1, int(pt.y) - 1);
+		md.drawBigPoint(Gdiplus::Color::Black, int(pt.x) - 1, int(pt.y) - 1);
 	}
 	//draw polyline
 	for (int i = 0; i < pg.polyline.size() - 1; i++)
 	{
-		md.drawLine(Color::Green, (int)pg.polyline[i].x, (int)pg.polyline[i].y, (int)pg.polyline[i + 1].x, (int)pg.polyline[i + 1].y);
+		md.drawLine(Gdiplus::Color::Green, (int)pg.polyline[i].x, (int)pg.polyline[i].y, (int)pg.polyline[i + 1].x, (int)pg.polyline[i + 1].y);
 	}
 	for (int i = 0; i < pg.polyline.size(); i++)
 	{
-		md.drawBigPoint(Color::Blue, (int)pg.polyline[i].x, (int)pg.polyline[i].y);
+		md.drawBigPoint(Gdiplus::Color::Blue, (int)pg.polyline[i].x, (int)pg.polyline[i].y);
 	}
 	md.unlockBits();
 	md.saveBitmap("testTCC.png");
@@ -2653,7 +2670,7 @@ void testTCCAll()
 		{
 			if (pts.size()>0)
 			{
-				Color color = randomColor();
+				Gdiplus::Color color = randomColor();
 				for each (Pt pt in pts)
 				{
 					md.drawBigPoint(color, int(pt.x), int(pt.y));
@@ -2674,7 +2691,7 @@ void testTCCAll()
 				}
 				for (int i = 0; i < pg.polyline.size(); i++)
 				{
-					md.drawBigPoint(Color::Blue, (int)pg.polyline[i].x, (int)pg.polyline[i].y);
+					md.drawBigPoint(Gdiplus::Color::Blue, (int)pg.polyline[i].x, (int)pg.polyline[i].y);
 				}
 				pts.clear();
 			}
@@ -2714,7 +2731,7 @@ void drawIntersection(list<Traj*> trajs)
 			GeoPoint* pt = (*ptIter);
 			if (md.inArea(pt->lat, pt->lon) && pt->mmRoadId == -1)
 			{
-				md.drawBigPoint(Color::Red, pt->lat, pt->lon);
+				md.drawBigPoint(Gdiplus::Color::Red, pt->lat, pt->lon);
 			}
 		}
 	}
@@ -2751,7 +2768,7 @@ void drawIntersection(list<Traj*> trajs)
 					{
 						if (steadyTime < steadyTimeThreshold && steadyTime > 10)
 						{
-							md.drawBigPoint(Color::Black, prePt->lat, prePt->lon);
+							md.drawBigPoint(Gdiplus::Color::Black, prePt->lat, prePt->lon);
 						}
 						steadyStatus = false;
 					}
@@ -2784,6 +2801,21 @@ void main()
 	int startTime = clock();
 	srand((unsigned)time(NULL));
 
+	/**********************************************************/
+	/*test code starts from here*/
+/*	Matrix<double> mat(3, 3);
+	mat.at(0, 0) = 1;
+	mat.at(1, 1) = 2;
+	mat.at(2, 2) = 3;
+	Matrix<double> mat2(mat);
+	Matrix<double> mat3((mat*mat2)+mat);
+	mat3.print();
+	system("pause");
+	exit(0);*/
+	/*test code ends*/
+	/**********************************************************/
+	
+	
 /**********************************************************/
 /*test code starts from here*/
 	/*Map m;
@@ -2907,10 +2939,10 @@ void main()
 		//画
 		md.newBitmap();
 		md.lockBits();
-		drawTrajs(Color::Red, extendTrajs, true, false);
+		drawTrajs(Gdiplus::Color::Red, extendTrajs, true, false);
 		createGridIndex(createGridIndexForOneTraj);
-		drawGridLine(Color::Green);
-		md.drawMap(Color::Blue, mapFilePath);
+		drawGridLine(Gdiplus::Color::Green);
+		md.drawMap(Gdiplus::Color::Blue, mapFilePath);
 		md.unlockBits();
 		md.saveBitmap("testExtend.png");
 		system("pause");
@@ -2926,7 +2958,7 @@ void main()
 		
 		md.newBitmap();
 		md.lockBits();
-		md.drawMap(Color::Blue, mapFilePath);
+		md.drawMap(Gdiplus::Color::Blue, mapFilePath);
 		drawIntersection(tempTrajs);
 		md.unlockBits();
 		md.saveBitmap("intersection.png");
@@ -3018,10 +3050,10 @@ void main()
 	{
 		md.newBitmap();
 		md.lockBits();
-		md.drawMap(Color::Blue, mapFilePath);
+		md.drawMap(Gdiplus::Color::Blue, mapFilePath);
 		cout << tempTrajs.size() << endl;
 		TrajDrawer td;
-		td.drawMMTrajs(tempTrajs, md, Color::Red, false, false, false, true);
+		td.drawMMTrajs(tempTrajs, md, Gdiplus::Color::Red, false, false, false, true);
 		//drawTrajPts(trajs);
 		//createGridIndex(createGridIndexForOneTraj);
 		//drawGridLine(Color::Green);
@@ -3041,10 +3073,10 @@ void main()
 	{
 		md.newBitmap();
 		md.lockBits();
-		md.drawMap(Color::Blue, mapFilePath);
-		drawTrajs(Color::Red, trajs, true, false);
+		md.drawMap(Gdiplus::Color::Blue, mapFilePath);
+		drawTrajs(Gdiplus::Color::Red, trajs, true, false);
 		createGridIndex(createGridIndexForOneTraj);
-		drawGridLine(Color::Green);
+		drawGridLine(Gdiplus::Color::Green);
 		md.unlockBits();
 		md.saveBitmap("map.png");
 		system("pause");
@@ -3097,7 +3129,7 @@ void main()
 	drawGridLine(Gdiplus::Color::Green);
 	//md.drawMap(Gdiplus::Color::Blue, mapFilePath);
 	core_v2();
-	//map.drawMap(Color::Blue, md);
+	roadNetwork.drawMap(Gdiplus::Color::Blue, md);
 	//drawClusteredTrajs();	
 	md.unlockBits();
 	
@@ -3114,7 +3146,7 @@ void main()
 		pngName += " [zoom in]";
 	}
 	pngName += ".png";*/
-	string pngName = "map.png";
+	string pngName = "test_cluster.png";
 	md.saveBitmap(pngName);
 	cout << ">> drawing finished, output to " + pngName << endl;
 	int endTime = clock();

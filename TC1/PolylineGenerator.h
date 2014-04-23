@@ -1,5 +1,5 @@
 /* 
- * Last Updated at [2014/3/4 15:47] by wuhao
+ * Last Updated at [2014/4/23 10:39] by wuhao
  */
 #include <iostream>
 #include <vector>
@@ -30,7 +30,7 @@ public:
 	double r;
 	int n;
 	double lambdaP;
-	double anglePenalty = 0.01; //跑wangyin实验用0.035比较好
+	double anglePenalty = 0.02; //跑wangyin实验用0.035比较好
 
 	PolylineGenerator();
 	void genPolyline(list<Pt>& pts);

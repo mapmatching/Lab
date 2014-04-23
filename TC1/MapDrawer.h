@@ -32,7 +32,7 @@
 #include <io.h>
 #include <fstream>
 #include <iostream>
-using namespace Gdiplus;
+//using namespace Gdiplus;
 #pragma comment(lib,"gdiplus.lib")
 
 
@@ -50,14 +50,14 @@ public:
 	~MapDrawer();
 
 	//绘画函数具有鲁棒性，无需判断是否在范围内
-	void drawPoint(Color color, int x, int y); //在屏幕(x,y)画一个像素点
-	void drawPoint(Color color, double lat, double lon); //在地里坐标(lat,lon)对应的图上画一个像素点
-	void drawBigPoint(Color color, int x, int y); //在屏幕(x,y)画一个十字点
-	void drawBigPoint(Color color, double lat, double lon); //在地里坐标(lat,lon)对应的图上画一个十字点
-	void drawLine(Color color, int x1, int y1, int x2, int y2); 
-	void drawLine(Color color, double lat1, double lon1, double lat2, double lon2);
-	void drawBoldLine(Color color, double lat1, double lon1, double lat2, double lon2); //画一条粗线
-	void drawMap(Color color, std::string mapFilePath); //画地图，mapFilePath为地图文件路径，需OSM标准格式
+	void drawPoint(Gdiplus::Color color, int x, int y); //在屏幕(x,y)画一个像素点
+	void drawPoint(Gdiplus::Color color, double lat, double lon); //在地里坐标(lat,lon)对应的图上画一个像素点
+	void drawBigPoint(Gdiplus::Color color, int x, int y); //在屏幕(x,y)画一个十字点
+	void drawBigPoint(Gdiplus::Color color, double lat, double lon); //在地里坐标(lat,lon)对应的图上画一个十字点
+	void drawLine(Gdiplus::Color color, int x1, int y1, int x2, int y2);
+	void drawLine(Gdiplus::Color color, double lat1, double lon1, double lat2, double lon2);
+	void drawBoldLine(Gdiplus::Color color, double lat1, double lon1, double lat2, double lon2); //画一条粗线
+	void drawMap(Gdiplus::Color color, std::string mapFilePath); //画地图，mapFilePath为地图文件路径，需OSM标准格式
 
 	void newBitmap(); //新建画布，画图前需调用，需事先设定好area和resolution
 	void lockBits(); //画图前必须先调用这个，需在newBitmap()操作之后调用
@@ -71,16 +71,16 @@ public:
 	bool inArea(int x, int y); //判断点(x,y)是否在画布范围内
 	void zoomIn(int upperLeft_x, int upperLeft_y, int width, int height, int newR_width); //【只适合用于北半球！】放大区域，左上角像素坐标和矩形长宽为参数输入，newR_width为新画布宽度
 	
-	Point geoToScreen(double lat, double lon); //将地理坐标转换成屏幕坐标,返回类型为Gdiplus::Point
+	Gdiplus::Point geoToScreen(double lat, double lon); //将地理坐标转换成屏幕坐标,返回类型为Gdiplus::Point
 	std::pair<double, double> screenToGeo(int screenX, int screenY); //将屏幕坐标转换成地理坐标,返回pair的first为lat,second为lon
 
 private:
 	ULONG_PTR gdiplusToken;
-	Bitmap* bm;
-	BitmapData* bmData;
+	Gdiplus::Bitmap* bm;
+	Gdiplus::BitmapData* bmData;
 	
-	void MapDrawer::bresenhamDrawLine_x(Color color, int x1, int y1, int x2, int y2);
-	void MapDrawer::bresenhamDrawLine_y(Color color, int x1, int y1, int x2, int y2);
+	void MapDrawer::bresenhamDrawLine_x(Gdiplus::Color color, int x1, int y1, int x2, int y2);
+	void MapDrawer::bresenhamDrawLine_y(Gdiplus::Color color, int x1, int y1, int x2, int y2);
 	int GetEncoderClsid(const WCHAR* format, CLSID* pClsid);
 	wchar_t* CharToWchar(const char* c);
 	

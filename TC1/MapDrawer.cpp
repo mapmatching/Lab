@@ -1,5 +1,5 @@
 /* 
- * Last Updated at [2014/4/15 16:30] by wuhao
+ * Last Updated at [2014/4/23 10:39] by wuhao
  */
 #include "MapDrawer.h"
 
@@ -7,8 +7,8 @@
 MapDrawer::MapDrawer()
 {
 	//GDI+ initializaton
-	GdiplusStartupInput gdiplusStartupInput;
-	GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
+	Gdiplus::GdiplusStartupInput gdiplusStartupInput;
+	Gdiplus::GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
 
 	minLat = 0;
 	maxLat = 0;
@@ -23,7 +23,7 @@ MapDrawer::~MapDrawer()
 	//GDI+ 收尾工作
 	delete bm;
 	delete bmData;
-	GdiplusShutdown(gdiplusToken);
+	Gdiplus::GdiplusShutdown(gdiplusToken);
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -72,14 +72,14 @@ void MapDrawer::newBitmap()
 		system("pause");
 		exit(0);
 	}
-	bm = new Bitmap(r_width, r_height, PixelFormat32bppARGB);
+	bm = new Gdiplus::Bitmap(r_width, r_height, PixelFormat32bppARGB);
 }
 
 void MapDrawer::lockBits()
 {
-	bmData = new BitmapData;
-	bm->LockBits(new Rect(0, 0, r_width, r_height),
-		ImageLockModeRead | ImageLockModeWrite, PixelFormat32bppARGB, bmData);
+	bmData = new Gdiplus::BitmapData;
+	bm->LockBits(new Gdiplus::Rect(0, 0, r_width, r_height),
+		Gdiplus::ImageLockModeRead | Gdiplus::ImageLockModeWrite, PixelFormat32bppARGB, bmData);
 }
 
 void MapDrawer::unlockBits()
@@ -87,7 +87,7 @@ void MapDrawer::unlockBits()
 	bm->UnlockBits(bmData);
 }
 
-void MapDrawer::drawPoint(Color color, int x, int y)
+void MapDrawer::drawPoint(Gdiplus::Color color, int x, int y)
 {
 	if (!inArea(x, y))
 	{
@@ -104,20 +104,20 @@ void MapDrawer::drawPoint(Color color, int x, int y)
 	row[x3] = color.GetA();
 }
 
-void MapDrawer::drawPoint(Color color, double lat, double lon)
+void MapDrawer::drawPoint(Gdiplus::Color color, double lat, double lon)
 {
 	if (inArea(lat, lon))
 	{
-		Point pt = geoToScreen(lat, lon);
+		Gdiplus::Point pt = geoToScreen(lat, lon);
 		drawPoint(color, pt.X, pt.Y);
 	}
 }
 
-void MapDrawer::drawBigPoint(Color color, double lat, double lon)
+void MapDrawer::drawBigPoint(Gdiplus::Color color, double lat, double lon)
 {
 	if (inArea(lat, lon))
 	{
-		Point pt = geoToScreen(lat, lon);
+		Gdiplus::Point pt = geoToScreen(lat, lon);
 		if (pt.X >= 1)
 			drawPoint(color, pt.X - 1, pt.Y);
 		if (pt.X <= r_width - 2)
@@ -130,9 +130,9 @@ void MapDrawer::drawBigPoint(Color color, double lat, double lon)
 	}
 }
 
-void MapDrawer::drawBigPoint(Color color, int x, int y)
+void MapDrawer::drawBigPoint(Gdiplus::Color color, int x, int y)
 {
-	Point pt = Point(x, y);
+	Gdiplus::Point pt = Gdiplus::Point(x, y);
 	if (pt.X >= 1)
 		drawPoint(color, pt.X - 1, pt.Y);
 	if (pt.X <= r_width - 2)
@@ -144,7 +144,7 @@ void MapDrawer::drawBigPoint(Color color, int x, int y)
 	drawPoint(color, pt.X, pt.Y);
 }
 
-void MapDrawer::drawLine(Color color, int x1, int y1, int x2, int y2)
+void MapDrawer::drawLine(Gdiplus::Color color, int x1, int y1, int x2, int y2)
 {
 	/*
 	if (x1 == r_width)
@@ -173,25 +173,25 @@ void MapDrawer::drawLine(Color color, int x1, int y1, int x2, int y2)
 		bresenhamDrawLine_y(color, x1, y1, x2, y2);
 }
 
-void MapDrawer::drawLine(Color color, double lat1, double lon1, double lat2, double lon2)
+void MapDrawer::drawLine(Gdiplus::Color color, double lat1, double lon1, double lat2, double lon2)
 {
 	if (!inArea(lat1, lon1) && !inArea(lat2, lon2))
 	{
 		return;
 	}
-	Point pt1, pt2;
+	Gdiplus::Point pt1, pt2;
 	pt1 = geoToScreen(lat1, lon1);
 	pt2 = geoToScreen(lat2, lon2);
 	drawLine(color, pt1.X, pt1.Y, pt2.X, pt2.Y);
 }
 
-void MapDrawer::drawBoldLine(Color color, double lat1, double lon1, double lat2, double lon2)
+void MapDrawer::drawBoldLine(Gdiplus::Color color, double lat1, double lon1, double lat2, double lon2)
 {
 	if (!inArea(lat1, lon1) && !inArea(lat2, lon2))
 	{
 		return;
 	}
-	Point pt1, pt2, pt3, pt4, pt5, pt6;
+	Gdiplus::Point pt1, pt2, pt3, pt4, pt5, pt6;
 	pt1 = geoToScreen(lat1, lon1);
 	pt2 = geoToScreen(lat2, lon2);
 	drawLine(color, pt1.X, pt1.Y, pt2.X, pt2.Y);
@@ -213,9 +213,9 @@ void MapDrawer::drawBoldLine(Color color, double lat1, double lon1, double lat2,
 	drawLine(color, pt5.X, pt5.Y, pt6.X, pt6.Y);
 }
 
-Color randomColor();
+Gdiplus::Color randomColor();
 
-void MapDrawer::drawMap(Color color, std::string mapFilePath)
+void MapDrawer::drawMap(Gdiplus::Color color, std::string mapFilePath)
 {
 	/************************************************************************/
 	/* OpenStreetMap格式说明
@@ -237,7 +237,7 @@ void MapDrawer::drawMap(Color color, std::string mapFilePath)
 		double lat1, lon1, lat2, lon2;
 		lat2 = atof(substrs[3].c_str());
 		lon2 = atof(substrs[4].c_str());
-		Color color_ = randomColor();
+		Gdiplus::Color color_ = randomColor();
 		for (int i = 3; i < substrs.size() - 3; i+=2)
 		{
 			lat1 = lat2;
@@ -245,8 +245,8 @@ void MapDrawer::drawMap(Color color, std::string mapFilePath)
 			lat2 = atof(substrs[i + 2].c_str());
 			lon2 = atof(substrs[i + 3].c_str());
 			drawLine(color_, lat1, lon1, lat2, lon2);
-			drawBigPoint(Color::Black, lat1, lon1);
-			drawBigPoint(Color::Black, lat2, lon2);
+			drawBigPoint(Gdiplus::Color::Black, lat1, lon1);
+			drawBigPoint(Gdiplus::Color::Black, lat2, lon2);
 		}
 	}
 	ifs.close();
@@ -287,11 +287,11 @@ void MapDrawer::zoomIn(int upperLeft_x, int upperLeft_y, int width, int height, 
 	setResolution(newR_width);
 }
 
-Point MapDrawer::geoToScreen(double lat, double lon)
+Gdiplus::Point MapDrawer::geoToScreen(double lat, double lon)
 {
 	int x = (lon - minLon) / ((maxLon - minLon)  / (double)r_width);
 	int y = (maxLat -lat) / ((maxLat - minLat) / (double)r_height); //屏幕Y轴是向下递增的
-	Point pt(x, y);
+	Gdiplus::Point pt(x, y);
 	return pt;
 }
 
@@ -311,17 +311,17 @@ int MapDrawer::GetEncoderClsid(const WCHAR* format, CLSID* pClsid)
 	UINT  num = 0;          // number of image encoders
 	UINT  size = 0;         // size of the image encoder array in bytes
 
-	ImageCodecInfo* pImageCodecInfo = NULL;
+	Gdiplus::ImageCodecInfo* pImageCodecInfo = NULL;
 
-	GetImageEncodersSize(&num, &size);
+	Gdiplus::GetImageEncodersSize(&num, &size);
 	if (size == 0)
 		return -1;  // Failure
 
-	pImageCodecInfo = (ImageCodecInfo*)(malloc(size));
+	pImageCodecInfo = (Gdiplus::ImageCodecInfo*)(malloc(size));
 	if (pImageCodecInfo == NULL)
 		return -1;  // Failure
 
-	GetImageEncoders(num, size, pImageCodecInfo);
+	Gdiplus::GetImageEncoders(num, size, pImageCodecInfo);
 
 	for (UINT j = 0; j < num; ++j)
 	{
@@ -337,7 +337,7 @@ int MapDrawer::GetEncoderClsid(const WCHAR* format, CLSID* pClsid)
 	return -1;  // Failure
 }
 
-void MapDrawer::bresenhamDrawLine_x(Color color, int x1, int y1, int x2, int y2)
+void MapDrawer::bresenhamDrawLine_x(Gdiplus::Color color, int x1, int y1, int x2, int y2)
 {
 	int _x1, _y1, _x2, _y2;
 	if (x1 < x2)
@@ -376,7 +376,7 @@ void MapDrawer::bresenhamDrawLine_x(Color color, int x1, int y1, int x2, int y2)
 	}
 }
 
-void MapDrawer::bresenhamDrawLine_y(Color color, int x1, int y1, int x2, int y2)
+void MapDrawer::bresenhamDrawLine_y(Gdiplus::Color color, int x1, int y1, int x2, int y2)
 {
 	int _x1, _y1, _x2, _y2;
 	if (y1 < y2)

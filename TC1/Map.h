@@ -1,5 +1,5 @@
 /* 
- * Last Updated at [2014/2/24 14:35] by wuhao
+ * Last Updated at [2014/4/23 10:39] by wuhao
  */
 #pragma once
 #include "GeoPoint.h"
@@ -79,7 +79,7 @@ public:
 	void delEdge(int edgeId);
 	void getMinMaxLatLon(string nodeFilePath);
 
-	void drawMap(Color color, MapDrawer& md);
+	void drawMap(Gdiplus::Color color, MapDrawer& md);
 
 //private:
 	int gridWidth, gridHeight;
