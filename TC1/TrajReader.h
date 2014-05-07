@@ -162,7 +162,7 @@ void TrajReader::readTrajs(list<Traj*>& dest, int count /* = INF */)
 		}
 	}
 	cout << ">> reading trajs finished" << endl;
-	cout << dest.size() << "trajs in all" << endl;
+	cout << dest.size() << " trajs in all" << endl;
 	trajIfs.close();
 }
 

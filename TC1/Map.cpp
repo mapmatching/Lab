@@ -1,5 +1,5 @@
 /* 
- * Last Updated at [2014/4/23 10:39] by wuhao
+ * Last Updated at [2014/5/7 14:52] by wuhao
  */
 #include "Map.h"
 
@@ -763,12 +763,44 @@ int Map::splitEdge(int edgeId, double lat, double lon)
 	return newNodeId;
 }
 
-void Map::delEdge(int edgeId)
+void Map::delEdge(int edgeId, bool delBirectionEdges /* = true */)
 {
-	//【注意】会发生内存泄露
+	//【注意】可能会发生内存泄露，原edge没有被del掉
+	
+	int startNodeId = edges[edgeId]->startNodeId;
+	int endNodeId = edges[edgeId]->endNodeId;
 	edges[edgeId] = NULL;
-	//TODO 邻接表忘记删了._.
-	//这个不能用
+	AdjNode* currentAdjNode = adjList[startNodeId];
+	while (currentAdjNode->next != NULL)
+	{
+		if (currentAdjNode->next->endPointId == endNodeId)
+		{
+			AdjNode* delNode = currentAdjNode->next;
+			currentAdjNode->next = currentAdjNode->next->next;
+			delete delNode;
+			break;
+		}
+		currentAdjNode = currentAdjNode->next;
+	}
+	if (delBirectionEdges) //删除反向边
+	{
+		int reverseEdgeId = hasEdge(endNodeId, startNodeId);
+		if (reverseEdgeId == -1) //没有反向边
+			return;		
+		edges[reverseEdgeId] = NULL;
+		AdjNode* currentAdjNode = adjList[endNodeId];
+		while (currentAdjNode->next != NULL)
+		{
+			if (currentAdjNode->next->endPointId == startNodeId)
+			{
+				AdjNode* delNode = currentAdjNode->next;
+				currentAdjNode->next = currentAdjNode->next->next;
+				delete delNode;
+				break;
+			}
+			currentAdjNode = currentAdjNode->next;
+		}
+	}
 }
 
 Gdiplus::Color randomColor();
@@ -824,6 +856,54 @@ void Map::drawMap(Gdiplus::Color color, MapDrawer& md)
 	}
 }
 
+void Map::drawDeletedEdges(Gdiplus::Color color, MapDrawer& md)
+{
+	for (int i = 0; i < deletedEdges.size(); i++)
+	{
+		cout << deletedEdges.size() << endl;
+		Figure::iterator ptIter = deletedEdges[i]->figure->begin(), nextPtIter = ptIter;
+		nextPtIter++;
+		while (1)
+		{
+			if (nextPtIter == deletedEdges[i]->figure->end())
+				break;
+			md.drawBoldLine(color, (*ptIter)->lat, (*ptIter)->lon, (*nextPtIter)->lat, (*nextPtIter)->lon);
+			md.drawBigPoint(Gdiplus::Color::Black, (*ptIter)->lat, (*ptIter)->lon);
+			md.drawBigPoint(Gdiplus::Color::Black, (*nextPtIter)->lat, (*nextPtIter)->lon);
+			ptIter++;
+			nextPtIter++;
+		}
+	}	
+}
+
+void Map::deleteEdgesRandomly(int delNum, double minEdgeLengthM)
+{
+	//////////////////////////////////////////////////////////////////////////
+	///随机删除delNum条路，路的长度需超过minEdgeLengthM（单位为m）
+	///随机种子需要自己在main函数里写
+	//////////////////////////////////////////////////////////////////////////
+	
+	int victimId;
+	int count = 0;
+	while (1)
+	{
+		if (count == delNum)
+			break;
+		if (edges[victimId = int(((double)rand()) / RAND_MAX * (edges.size() - 1))] == NULL)
+			continue;
+		if (edges[victimId]->lengthM < minEdgeLengthM)
+			continue;
+
+		deletedEdges.push_back(edges[victimId]);
+		cout << "delete " << victimId << endl;
+		int reverseVictimId = hasEdge(edges[victimId]->endNodeId, edges[victimId]->startNodeId);
+		if (reverseVictimId != -1)
+			deletedEdges.push_back(edges[reverseVictimId]);
+		delEdge(victimId);
+		count++;
+	}
+	cout << ">> randomly deleted " << delNum << " edges" << endl;
+}
 //////////////////////////////////////////////////////////////////////////
 ///private part
 //////////////////////////////////////////////////////////////////////////

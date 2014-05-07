@@ -3,7 +3,6 @@
  */
 #include "PolylineGenerator.h"
 
-
 double dist(Pt& pt1, Pt& pt2)
 {
 	return sqrt((pt1.x - pt2.x) * (pt1.x - pt2.x) + (pt1.y - pt2.y) * (pt1.y - pt2.y));
@@ -33,8 +32,8 @@ pair<double, double> PolylineGenerator::central_difference(double (PolylineGener
 	//////////////////////////////////////////////////////////////////////////
 	double ff, gg;
 	int k;
-	int max_it = 50;
-	double eps = 1e-5;
+	//int max_it = 100;
+	//double eps = 1e-5;
 	double h = 1;
 	ff = 0.0;
 	pair<double, double> ans;
@@ -45,7 +44,7 @@ pair<double, double> PolylineGenerator::central_difference(double (PolylineGener
 	for (k = 0; k < max_it; k++)
 	{
 		gg = ((this->*f)(x + h, y, vi) - (this->*f)(x - h, y, vi)) / (h + h);
-		if (fabs(gg - ff) < eps)
+		if (fabs(gg - ff) < stopEps)
 		{
 			ans.first = gg;
 			break;
@@ -55,7 +54,7 @@ pair<double, double> PolylineGenerator::central_difference(double (PolylineGener
 	}
 	if (k == max_it)
 	{
-		printf("未能达到精度要求,需增大迭代次数!");
+		printf("<df/dx>未能达到精度要求,需增大迭代次数!");
 		system("pause");
 	}
 	ans.first = gg;
@@ -66,7 +65,7 @@ pair<double, double> PolylineGenerator::central_difference(double (PolylineGener
 	for (k = 0; k < max_it; k++)
 	{
 		gg = ((this->*f)(x, y + h, vi) - (this->*f)(x, y - h, vi)) / (h + h);
-		if (fabs(gg - ff) < eps)
+		if (fabs(gg - ff) < stopEps)
 		{
 			ans.second = gg;
 			break;
@@ -76,11 +75,119 @@ pair<double, double> PolylineGenerator::central_difference(double (PolylineGener
 	}
 	if (k == max_it)
 	{
-		printf("未能达到精度要求,需增大迭代次数!");
+		printf("<df/dy>未能达到精度要求,需增大迭代次数!");
 		system("pause");
 	}
 	ans.second = gg;
 	return ans;
+}
+
+double PolylineGenerator::d2f_dx2(int x, int y, int i)
+{
+	double preIterAns = 0.0, currentIterAns;
+	//int max_it = 1000; //最大迭代次数
+	//double eps = 1e-5;
+	double h = 1;
+	double ans;
+	int k;
+
+	//求d2f/dx2
+	for (k = 0; k < max_it; k++)
+	{
+		currentIterAns = (calculate(x + h, y, i) - 2 * calculate(x, y, i) + calculate(x - h, y, i)) / (h * h);
+		if (fabs(currentIterAns - preIterAns) < stopEps)
+		{
+			ans = currentIterAns;
+			break;
+		}
+		h *= 0.5;
+		preIterAns = currentIterAns;
+	}
+	if (k == max_it)
+	{
+		printf("<d2f/dx2>未能达到精度要求,需增大迭代次数!");
+		system("pause");
+	}
+	return ans;
+}
+
+double PolylineGenerator::d2f_dy2(int x, int y, int i)
+{
+	double preIterAns = 0.0, currentIterAns;
+	//int max_it = 1000; //最大迭代次数
+	//double eps = 1e-5;
+	double h = 1;
+	double ans;
+	int k;
+
+	//求d2f/dy2
+	for (k = 0; k < max_it; k++)
+	{
+		currentIterAns = (calculate(x, y + h, i) - 2 * calculate(x, y, i) + calculate(x, y - h, i)) / (h * h);
+		if (fabs(currentIterAns - preIterAns) < stopEps)
+		{
+			ans = currentIterAns;
+			break;
+		}
+		h *= 0.5;
+		preIterAns = currentIterAns;
+	}
+	if (k == max_it)
+	{
+		printf("<d2f/dy2>未能达到精度要求,需增大迭代次数!");
+		system("pause");
+	}
+	return ans;
+}
+
+double PolylineGenerator::d2f_dxdy(int x, int y, int i)
+{
+	double preIterAns = 0.0, currentIterAns;
+	//int max_it = 1000; //最大迭代次数
+	//double eps = 1e-5;
+	double h = 1;
+	double ans;
+	int k;
+
+	//求d2f/dxdy
+	for (k = 0; k < max_it; k++)
+	{
+		currentIterAns = (calculate(x + h / 2, y + h / 2, i) - calculate(x + h / 2, y - h / 2, i)
+			- calculate(x - h / 2, y + h / 2, i) + calculate(x - h / 2, y - h / 2, i)) / (h * h);
+		if (fabs(currentIterAns - preIterAns) < stopEps)
+		{
+			ans = currentIterAns;
+			break;
+		}
+		h *= 0.5;
+		preIterAns = currentIterAns;
+	}
+	if (k == max_it)
+	{
+		printf("<d2f/dxdy>未能达到精度要求,需增大迭代次数!");
+		system("pause");
+	}
+	return ans;
+}
+
+double PolylineGenerator::calcStep(int x, int y, int i)
+{
+	double (PolylineGenerator::* pCalcFunc)(double, double, int); //一个类成员函数指针变量pmf的定义
+	pCalcFunc = &PolylineGenerator::calculate;
+	pair<double, double> gradient = central_difference(pCalcFunc, i);
+	Matrix<double> gradF(2, 1);
+	gradF.at(0, 0) = gradient.first;
+	gradF.at(1, 0) = gradient.second;
+	//计算Hesse矩阵
+	Matrix<double> hesseMat(2, 2);
+	hesseMat.at(0, 0) = d2f_dx2(x, y, i);
+	hesseMat.at(0, 1) = hesseMat.at(1, 0) = d2f_dxdy(x, y, i);
+	hesseMat.at(1, 1) = d2f_dy2(x, y, i);
+	
+	//计算gradT*H*grad
+	Matrix<double> fengmu = gradF.traspose() * hesseMat * gradF;
+
+	return sqrt(gradient.first * gradient.first + gradient.second * gradient.second) / fengmu.at(0, 0);
 }
 
 double PolylineGenerator::calculate(double x, double y, int i)
@@ -190,7 +297,6 @@ double PolylineGenerator::calculate(double x, double y, int i)
 
 PolylineGenerator::PolylineGenerator()
 {
-
 }
 
 void PolylineGenerator::genPolyline(list<Pt>& pts)
@@ -200,6 +306,11 @@ void PolylineGenerator::genPolyline(list<Pt>& pts)
 		this->pts.push_back(pt);
 	}
 	initialization();
+	//生成10个控制点的polyline
+	for (int i = 0; i < 7; i++)
+	{
+		optimizationEx();
+	}
 }
 
 double PolylineGenerator::getRadius()
@@ -351,144 +462,6 @@ void PolylineGenerator::doProject()
 
 void PolylineGenerator::optimization()
 {
-	//////////////////////////////////////////////////////////////////////////
-	///不用这个版本
-	//////////////////////////////////////////////////////////////////////////
-	int k = polyline.size() - 1;
-	double convergeThreshold = 1;
-	//对每个点迭代
-	cout << "poly size " << polyline.size() << endl;
-	for (int i = 0; i < polyline.size(); i++)
-	{
-		//直到这个点的调整幅度达到收敛阈值
-		//TEST: 先对每个点迭代3次
-		for (int iter = 0; iter < 3; iter++)
-		{
-			double delta_nvi = 0;
-			double vvi = 0, sigma_posi_vi = 0, sigma_nega_vi = 0;
-			//求vvi, sigma_posi_vi, sigma_nega_vi
-			for each (Pt pt in (*vSet[i]))
-			{
-				vvi += (pt.dist * pt.dist);
-			}
-			if (i < k)
-			{
-				for each (Pt pt in (*sSet[i]))
-				{
-					sigma_posi_vi += (pt.dist * pt.dist);
-				}
-			}
-			if (i > 1)
-			{
-				for each (Pt pt in (*sSet[i - 1]))
-				{
-					sigma_nega_vi += (pt.dist * pt.dist);
-				}
-			}
-			//求delta_nvi
-			if (i == 0)
-			{
-				delta_nvi = vvi + sigma_posi_vi;
-			}
-			else if (i == k)
-			{
-				delta_nvi = vvi + sigma_nega_vi;
-			}
-			else
-			{
-				delta_nvi = vvi + sigma_nega_vi + sigma_posi_vi;
-			}
-			double Gvi = 1 / n * delta_nvi;
-			//求梯度
-			double sigma_x_in_seti = 0, sigma_y_in_seti = 0;
-			int setPtCount = 0;
-			//test code starts
-			cout << "vSet" << i << " size: " << vSet[1]->size() << endl;
-			//test code ends
-			for each(Pt pt in (*vSet[i]))
-			{
-				sigma_x_in_seti += pt.x;
-				sigma_y_in_seti += pt.y;
-			}
-			setPtCount += vSet[i]->size();
-			if (i == 0)
-			{
-				for each(Pt pt in (*sSet[i]))
-				{
-					sigma_x_in_seti += pt.x;
-					sigma_y_in_seti += pt.y;
-				}
-				setPtCount += sSet[i]->size();
-			}
-			else if (i == k)
-			{
-				for each(Pt pt in (*sSet[i - 1]))
-				{
-					sigma_x_in_seti += pt.x;
-					sigma_y_in_seti += pt.y;
-				}
-				setPtCount += sSet[i - 1]->size();
-			}
-			else
-			{
-				for each(Pt pt in (*sSet[i - 1]))
-				{
-					sigma_x_in_seti += pt.x;
-					sigma_y_in_seti += pt.y;
-				}
-				for each(Pt pt in (*sSet[i]))
-				{
-					sigma_x_in_seti += pt.x;
-					sigma_y_in_seti += pt.y;
-				}
-				setPtCount += sSet[i]->size() + sSet[i - 1]->size();
-			}
-			cout << "setPtCount = " << setPtCount << endl;
-			double gradient_x = 2 / n * setPtCount * polyline[i].x - 2 / n * sigma_x_in_seti;
-			double gradient_y = 2 / n * setPtCount * polyline[i].y - 2 / n * sigma_y_in_seti;
-			double direction_x = -gradient_x / sqrt(gradient_x * gradient_x + gradient_y * gradient_y);
-			double direction_y = -gradient_y / sqrt(gradient_x * gradient_x + gradient_y * gradient_y);
-			//test code start
-			printf("v%d gradient(%lf, %lf)\n", i, gradient_x, gradient_y);
-			printf("v%d direction(%lf, %lf)\n", i, direction_x,direction_y);
-			//double step = gradient_x * gradient_x + gradient_y * gradient_y;
-			double step = 10;
-			double newX = polyline[i].x + step * direction_x;
-			double newY = polyline[i].y + step * direction_y;
-			double delta = (newX - polyline[i].x) * (newX - polyline[i].x) + (newY - polyline[i].y) * (newY - polyline[i].y);
-			//if (delta < convergeThreshold)
-		//		break;
-			//else
-			{
-				polyline[i].x = newX;
-				polyline[i].y = newY;
-				doProject();
-			}			
-		}
-	}
-	//add a new point
-	double maxLength = 0;
-	int candidateV;
-	for (int i = 0; i < polyline.size() - 1; i++)
-	{
-		double tempDist = dist(polyline[i], polyline[i + 1]);
-		if (tempDist > maxLength)
-		{
-			maxLength = tempDist;
-			candidateV = i;
-		}
-	}
-	Pt newPt;
-	newPt.x = (polyline[candidateV].x + polyline[candidateV + 1].x) / 2;
-	newPt.y = (polyline[candidateV].y + polyline[candidateV + 1].y) / 2;
-	polyline.insert(polyline.begin() + candidateV + 1, newPt);
-	vSet.push_back(new list<Pt>);
-	sSet.push_back(new list<Pt>);
-	doProject();
-}
-
-void PolylineGenerator::optimization_()
-{
 	int k = polyline.size() - 1;
 	double convergeThreshold = 1;
 	//对每个点迭代
@@ -544,6 +517,87 @@ void PolylineGenerator::optimization_()
 			maxLength = tempDist;
 			candidateV = i;
 		}
+	}*/
+	double maxNum = -1;
+	for (int i = 0; i < polyline.size() - 1; i++)
+	{
+		if (sSet[i]->size() > maxNum)
+		{
+			maxNum = sSet[i]->size();
+			candidateV = i;
+		}
+	}
+	Pt newPt;
+	newPt.x = (polyline[candidateV].x + polyline[candidateV + 1].x) / 2;
+	newPt.y = (polyline[candidateV].y + polyline[candidateV + 1].y) / 2;
+	polyline.insert(polyline.begin() + candidateV + 1, newPt);
+	vSet.push_back(new list<Pt>);
+	sSet.push_back(new list<Pt>);
+	doProject();
+}
+
+void PolylineGenerator::optimizationEx()
+{
+	int k = polyline.size() - 1;
+	double convergeThreshold = 0.001;
+	double preGvi = 9999999999;
+	//对每个点迭代
+	cout << "poly size " << polyline.size() << endl;
+	for (int _i = 0; _i < 10; _i++)
+	{
+		for (int i = 0; i < polyline.size(); i++)
+		{
+			//直到这个点的调整幅度达到收敛阈值
+			//TEST: 先对每个点迭代3次
+			for (int iter = 0; iter < 1000; iter++)
+			{
+				double Gvi = calculate(polyline[i].x, polyline[i].y, i);
+				if (abs(Gvi - preGvi) / Gvi < convergeThreshold)
+				{
+					break;
+				}
+				//printf("Gvi = %lf\n", Gvi);
+				//求梯度
+				double (PolylineGenerator::* pCalcFunc)(double, double, int); //一个类成员函数指针变量pmf的定义
+				pCalcFunc = &PolylineGenerator::calculate;
+				pair<double, double> gradient = central_difference(pCalcFunc, i);
+				double gradient_x = gradient.first;
+				double gradient_y = gradient.second;				
+				//归一化
+				double direction_x = -gradient_x / sqrt(gradient_x * gradient_x + gradient_y * gradient_y);
+				double direction_y = -gradient_y / sqrt(gradient_x * gradient_x + gradient_y * gradient_y);				
+				//求步长
+				//double step = calcStep(polyline[i].x, polyline[i].y, i);
+				double step = 0.2;
+				//printf("step = %lf, gv[%d] = %lf\n", step, i, Gvi);
+				//system("pause");
+				//移动点
+				double newX = polyline[i].x + step * direction_x;
+				double newY = polyline[i].y + step * direction_y;
+				//double delta = (newX - polyline[i].x) * (newX - polyline[i].x) + (newY - polyline[i].y) * (newY - polyline[i].y);
+				//if (delta < convergeThreshold)
+				//		break;
+				//else
+				{
+					polyline[i].x = newX;
+					polyline[i].y = newY;
+					doProject();
+					preGvi = Gvi;
+				}
+			}
+		}
+	}
+	//add a new point
+	double maxLength = 0;
+	int candidateV;
+	/*for (int i = 0; i < polyline.size() - 1; i++)
+	{
+	double tempDist = dist(polyline[i], polyline[i + 1]);
+	if (tempDist > maxLength)
+	{
+	maxLength = tempDist;
+	candidateV = i;
+	}
 	}*/
 	double maxNum = -1;
 	for (int i = 0; i < polyline.size() - 1; i++)

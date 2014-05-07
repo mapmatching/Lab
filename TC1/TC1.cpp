@@ -1482,6 +1482,10 @@ int extendAndSplitEdge(GeoPoint* prePt, GeoPoint* succPt, double threshold, bool
 
 Edge* addNewPolyLineIntoMap(PolylineGenerator& pg)
 {
+	//////////////////////////////////////////////////////////////////////////
+	///将已经生成polyline的PolylineGenrator传入，将路加入路网，在genPolyline()被调用
+	//////////////////////////////////////////////////////////////////////////
+	
 	//create figure
 	//ofstream ofs("road.txt");
 	//ofs << fixed << showpoint << setprecision(8);
@@ -1644,10 +1648,13 @@ Edge* genPolyLine(Cluster& cluster)
 {
 	//////////////////////////////////////////////////////////////////////////
 	///对cluster中的轨迹生成新路,返回新路指针(新路是双向的,只返回一个)
+	///同时将新路加入地图
 	///生成新路后,将cluster中轨迹删除 [TODO: 是否要放到reMM过程中再删除值得商榷]
 	//////////////////////////////////////////////////////////////////////////
 	PolylineGenerator pg;
+	//将cluster里的轨迹点全部倒到pts里
 	list<Pt> pts;
+	
 	for each (IndexedTraj* iTraj in cluster)
 	{
 		for each (GeoPoint* gPt in *(iTraj->traj))
@@ -1660,12 +1667,8 @@ Edge* genPolyLine(Cluster& cluster)
 		}
 	}
 	pg.genPolyline(pts);
-	for (int i = 0; i < 9; i++)
-	{
-		pg.optimization_();
-	}
 	drawPolyline(pg);
-	/*Edge* newEdge = addNewPolyLineIntoMap(pg);
+	Edge* newEdge = addNewPolyLineIntoMap(pg);
 	//删除cluster中的轨迹以及清空cluster
 	//[TODO]不确定这么做好不好
 	for each(IndexedTraj* iTraj in cluster)
@@ -1676,32 +1679,32 @@ Edge* genPolyLine(Cluster& cluster)
 	}
 	cluster.clear();
 	gennedEgdes.push_back(newEdge->figure);
-	return newEdge;*/
-	//map.drawMap(Color::Blue, md);
+	return newEdge;
+	//TODO：下面一坨代码不知道干啥，先不理他
 	//reMap matching
-	/*list<Edge*> result;
+	list<Edge*> result;
 	for (Cluster::iterator trajIter = cluster.begin(); trajIter != cluster.end(); trajIter++)
 	{
-	IndexedTraj* iTraj = *trajIter;
-	Traj* traj = iTraj->traj;
-	result = MapMatching(*(iTraj->traj), 50.0); //MapMatching
-	//对每一个点
-	Traj::iterator ptIter = traj->begin();
-	list<Edge*>::iterator edgeIter = result.begin();
-	while (ptIter != traj->end())
-	{
-	if ((*edgeIter) != NULL) //匹配成功
-	{
-	md.drawBigPoint(Color::Green, (*ptIter)->lat, (*ptIter)->lon);
-	}
-	else //匹配失败
-	{
-	md.drawBigPoint(Color::Yellow, (*ptIter)->lat, (*ptIter)->lon);
-	}
-	ptIter++;
-	edgeIter++;
-	}
-	}	*/
+		IndexedTraj* iTraj = *trajIter;
+		Traj* traj = iTraj->traj;
+		result = MapMatching(*(iTraj->traj), 50.0); //MapMatching
+		//对每一个点
+		Traj::iterator ptIter = traj->begin();
+		list<Edge*>::iterator edgeIter = result.begin();
+		while (ptIter != traj->end())
+		{
+			if ((*edgeIter) != NULL) //匹配成功
+			{
+				md.drawBigPoint(Gdiplus::Color::Green, (*ptIter)->lat, (*ptIter)->lon);
+			}
+			else //匹配失败
+			{
+				md.drawBigPoint(Gdiplus::Color::Yellow, (*ptIter)->lat, (*ptIter)->lon);
+			}
+			ptIter++;
+			edgeIter++;
+		}
+	}	
 }
 	//cluster
 double dist_old(GeoPoint* pt, Traj* traj)
@@ -2086,7 +2089,7 @@ void reMM_and_Cluster_v2(Edge* newEdge)
 		//drawOneTraj(Color::Aqua, candidateITraj->traj);
 
 		//********rematch********
-		//TODO: MM候选区域范围设定值得商榷
+		//TODO: MM候选区域范围设定值得商榷，姑且先设定30
 		list<Edge*> result = MapMatching(*(candidateITraj->traj), 30.0);
 		bool mmRoadChanged = false; //标志reMM后有没有点本来没被匹配上的现在被匹配上了
 		//对每一个点
@@ -2115,14 +2118,14 @@ void reMM_and_Cluster_v2(Edge* newEdge)
 			ptIter++;
 			edgeIter++;
 		}
-
 		//split & extend
 		list<Traj*> newTrajs;
 		if (mmRoadChanged)
 		{
-			doExtendForOneMMTraj(candidateITraj->traj, newTrajs, 20, 30);
-			//drawOneTraj(Color::Aqua, candidateITraj->traj);
-			//drawTrajs(Color::Red, newTrajs, false, false);
+			doExtendForOneMMTraj(candidateITraj->traj, newTrajs, 20, 50);
+			drawOneTraj(Gdiplus::Color::Aqua, candidateITraj->traj); //匹配成功的子轨迹段
+			drawTrajs(Gdiplus::Color::Red, newTrajs, false, false); //匹配失败的子轨迹段
+			
 			//********recluster*******
 			//先把原来老的轨迹删除
 			candidateITraj->cluster->remove(candidateITraj);
@@ -2142,6 +2145,8 @@ void reMM_and_Cluster_v2(Edge* newEdge)
 			}
 		}
 	} // end of [for each(IndexedTraj* candidateITraj in nearTrajs)]
+
+
 	//reCluster
 	bool newRoadGenned = true;
 	while (newRoadGenned) //当子区域没有新路生成则跳出
@@ -2157,7 +2162,7 @@ void reMM_and_Cluster_v2(Edge* newEdge)
 			}
 			doCluster_v2(currentITraj);
 			//有新的子路生成
-			if (currentITraj->cluster->size() > 6)
+			if (currentITraj->cluster->size() > 4)
 			{
 				newRoadGenned = true;
 				drawTrajs(Gdiplus::Color::Green, *(currentITraj->cluster), true, false);
@@ -2205,7 +2210,7 @@ void reMM_and_Cluster_v2(Edge* newEdge)
 					list<Traj*> newExtendTrajs;
 					if (mmRoadChanged)
 					{
-						doExtendForOneMMTraj(candidateITraj->traj, newExtendTrajs, 20, 30);
+						doExtendForOneMMTraj(candidateITraj->traj, newExtendTrajs, 20, 50);
 						//drawOneTraj(Color::Aqua, candidateITraj->traj);
 						//drawTrajs(Color::Red, newTrajs, false, false);
 						//********recluster*******
@@ -2352,6 +2357,9 @@ void doCluster(vector<IndexedTraj*>& trajs)
 	//core
 void core()
 {
+	//////////////////////////////////////////////////////////////////////////
+	///旧版本，已停用
+	//////////////////////////////////////////////////////////////////////////
 	clusterDist = 20;
 	cout << "doing core func..." << endl;
 	//initialization
@@ -2462,18 +2470,23 @@ void core_v2()
 				if (trajs[k]->cluster->size() > supportThreshold)
 				{
 					
-					//system("pause");
 					//return;
-					//reMM_and_Cluster_v2(genPolyLine(*(trajs[k]->cluster)));
+					Edge* gennedEdge = genPolyLine(*(trajs[k]->cluster));
+					reMM_and_Cluster_v2(gennedEdge);
+					//return;
+					//system("pause");
 					newEdgeCount++;
 					//TODO: need test!
-					if (newEdgeCount == 5)
+					/*if (newEdgeCount <= 10)
 					{
 						drawTrajs(Gdiplus::Color::Red, *(trajs[k]->cluster), true, false);
 						genPolyLine(*(trajs[k]->cluster));
-						//map.drawMap(Color::Blue, md);
-						//drawAllGennedEdges();
-						//drawClusteredTrajs();
+						roadNetwork.drawMap(Gdiplus::Color::Blue, md);
+						drawAllGennedEdges();
+					}*/
+					if (newEdgeCount == 10)
+					{
+						drawAllGennedEdges();
 						return;
 					}
 				}
@@ -2491,6 +2504,24 @@ void drawTrajPts(vector<IndexedTraj*>& trajs)
 	for each(IndexedTraj* iTraj in trajs)
 	{
 		Traj* traj = iTraj->traj;
+		for (Traj::iterator ptIter = traj->begin(); ptIter != traj->end(); ptIter++)
+		{
+			if ((*ptIter)->mmRoadId != -1) //匹配成功
+			{
+				md.drawPoint(Gdiplus::Color::Green, (*ptIter)->lat, (*ptIter)->lon);
+			}
+			else //匹配失败
+			{
+				md.drawPoint(Gdiplus::Color::Red, (*ptIter)->lat, (*ptIter)->lon);
+			}
+		}
+	}
+}
+
+void drawTrajPts(list<Traj*>& trajs)
+{
+	for each(Traj* traj in trajs)
+	{
 		for (Traj::iterator ptIter = traj->begin(); ptIter != traj->end(); ptIter++)
 		{
 			if ((*ptIter)->mmRoadId != -1) //匹配成功
@@ -2621,10 +2652,6 @@ void testTCC()
 		}
 	}
 	pg.genPolyline(pts);
-	for (int i = 0; i < 10; i++)
-	{
-		pg.optimization_();
-	}
 
 	//draw
 	MapDrawer md;
@@ -2681,10 +2708,6 @@ void testTCCAll()
 				}
 				PolylineGenerator pg;
 				pg.genPolyline(pts);
-				for (int i = 0; i < 10; i++)
-				{
-					pg.optimization_();
-				}
 				for (int i = 0; i < pg.polyline.size() - 1; i++)
 				{
 					md.drawLine(color, (int)pg.polyline[i].x, (int)pg.polyline[i].y, (int)pg.polyline[i + 1].x, (int)pg.polyline[i + 1].y);
@@ -2731,7 +2754,7 @@ void drawIntersection(list<Traj*> trajs)
 			GeoPoint* pt = (*ptIter);
 			if (md.inArea(pt->lat, pt->lon) && pt->mmRoadId == -1)
 			{
-				md.drawBigPoint(Gdiplus::Color::Red, pt->lat, pt->lon);
+				md.drawPoint(Gdiplus::Color::Red, pt->lat, pt->lon);
 			}
 		}
 	}
@@ -2750,6 +2773,74 @@ void drawIntersection(list<Traj*> trajs)
 			if (md.inArea(pt->lat, pt->lon))
 			{
 				double dist = GeoPoint::distM(pt, prePt);
+				if (dist < 5.0 && abs(pt->time - prePt->time) < steadyTimeThreshold && dist / abs(pt->time - prePt->time) < steadySpeed)
+				{
+					if (steadyStatus == false)
+					{
+						steadyStatus = true;
+						steadyTime = abs(pt->time - prePt->time);
+					}
+					else
+					{
+						steadyTime += abs(pt->time - prePt->time);
+					}
+				}
+				else
+				{
+					if (steadyStatus)
+					{
+						if (steadyTime < steadyTimeThreshold && steadyTime > 10)
+						{
+							md.drawBigPoint(Gdiplus::Color::Black, prePt->lat, prePt->lon);
+						}
+						steadyStatus = false;
+					}
+				}
+			}
+		}
+	}
+}
+
+void drawIntersection_v2(list<Traj*> trajs)
+{
+	//////////////////////////////////////////////////////////////////////////
+	///改进版本
+	///十字路口特征：等待时间小于steadyTimeThreshold，前后车速不低于minSpeed
+	//////////////////////////////////////////////////////////////////////////
+	
+	//先画MM匹配失败的点
+	for each (Traj* traj in trajs)
+	{
+		Traj::iterator ptIter = traj->begin();
+		for (; ptIter != traj->end(); ptIter++)
+		{
+			GeoPoint* pt = (*ptIter);
+			if (md.inArea(pt->lat, pt->lon) && pt->mmRoadId == -1)
+			{
+				md.drawPoint(Gdiplus::Color::Red, pt->lat, pt->lon);
+			}
+		}
+	}
+
+	double steadySpeed = 0.001;
+	double steadyTimeThreshold = 150;
+	double minSpeed = 5;
+	for each (Traj* traj in trajs)
+	{
+		Traj::iterator ptIter = traj->begin(); ptIter++;
+		Traj::iterator preIter = traj->begin();
+
+		double steadyTime = 0; //记录停留时间
+		
+		bool steadyStatus = false;
+		double lastSpeed = 0; //记录最后的行车速度
+		for (; ptIter != traj->end(); ptIter++, preIter++)
+		{
+			GeoPoint* pt = (*ptIter), *prePt = (*preIter);
+			if (md.inArea(pt->lat, pt->lon))
+			{
+				double dist = GeoPoint::distM(pt, prePt);
+				//if
 				if (dist < 5.0 && abs(pt->time - prePt->time) < steadyTimeThreshold && dist / abs(pt->time - prePt->time) < steadySpeed)
 				{
 					if (steadyStatus == false)
@@ -2797,7 +2888,6 @@ void myMain()
 
 void main()
 {
-
 	int startTime = clock();
 	srand((unsigned)time(NULL));
 
@@ -2835,7 +2925,8 @@ void main()
 
 //=======================================initialization start========================================//
 	string mapFilePath = "D:\\trajectory\\singapore_data\\singapore_map\\WA_EdgeGeometry.txt";
-	string trajDir = "D:\\trajectory\\singapore_data\\20110102_03\\";	
+	//string trajDir = "D:\\trajectory\\singapore_data\\20110102_03\\";	
+	string trajDir = "D:\\trajectory\\singapore_data\\20120101_06\\";
 	vector<string> trajFolders;
 	string trajFileName;
 	//trajFolders.push_back(trajDir + "20110110_11\\");
@@ -2921,10 +3012,28 @@ void main()
 
 /*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑initialization end↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
 
+	
+	/**********************************************************/
+	/*test code starts from here*/
+	///test random edge deletion code
+	roadNetwork.deleteEdgesRandomly(10, 100.0);
+	md.newBitmap();
+	md.lockBits();
+	roadNetwork.drawMap(Gdiplus::Color::Blue, md);
+	roadNetwork.drawDeletedEdges(Gdiplus::Color::Red, md);
+	md.unlockBits();
+	md.saveBitmap("edgeDeletion.png");
+	system("pause");
+	exit(0);
+	/*test code ends*/
+	/**********************************************************/
+	
+	
 	/*一条龙*/
 	//用来测试调整doExtend中使用的到的三个limit参数
 	if (0)
 	{
+		//用这个！！
 		//limitSpeed = 50; //间隔大于50m/s的prune掉
 		limitDist = 300; //轨迹点之间超过300m的prune掉
 		//limitTime = 100; //采样间隔大于60秒的prune掉
@@ -2950,9 +3059,9 @@ void main()
 	}
 
 	/*画出十字路口点*/
-	if (0)
+	if (1)
 	{
-		trajFileName = "20110102_03.txt";
+		trajFileName = "splitedTrajs.txt";
 		readStdTrajs(trajDir + trajFileName, tempTrajs);
 		cout << "tempTrajs size = " << tempTrajs.size() << endl;
 		
@@ -3003,11 +3112,12 @@ void main()
 	/*用std轨迹格式(wy_MMTraj.txt)创建extendTraj*/
 	if (0)
 	{
+		//不用这个
 		double extendDist = 30;
 		trajFileName = "wy_MMTrajs.txt";
 		readStdTrajs(trajDir + trajFileName, rawTrajs);
 		cout << "MMed trajs's size = " << rawTrajs.size() << endl;
-		doExtend(rawTrajs, tempTrajs, extendDist, true);
+		doExtend(rawTrajs, tempTrajs, extendDist, 50, true);
 		system("pause");
 		exit(0);
 	}
@@ -3016,12 +3126,13 @@ void main()
 	trajFileName = "wy_extended_unmatched_trajs_smallarea.txt";
 	//trajFileName = "splitedTrajs.txt";
 	//trajFileName = "20110102_03.txt";
+	//trajFileName = "logs_20120105_20120106.txt";
 	//trajFileName = "wy_MMTrajs.txt";
 	readStdTrajs(trajDir + trajFileName, trajs);
 	//TrajReader tReader(trajDir + trajFileName);
 	//tReader.readTrajs(tempTrajs);
 
-	//cout << "extacted unmatched traj's size = " << trajs.size() << endl;
+	cout << "traj's size = " << trajs.size() << endl;
 //////////////////////////////////////////////////////////////////////////////////
 
 	/*读入原始轨迹，然后将过长的切断输出至"splitedTrajs.txt"*/
@@ -3043,27 +3154,22 @@ void main()
 	}
 	
 	
-	/**********************************************************/
-	/*test code starts from here*/
 	//画使用viterbi MM后的轨迹点
 	if (0)
 	{
 		md.newBitmap();
 		md.lockBits();
 		md.drawMap(Gdiplus::Color::Blue, mapFilePath);
-		cout << tempTrajs.size() << endl;
 		TrajDrawer td;
-		td.drawMMTrajs(tempTrajs, md, Gdiplus::Color::Red, false, false, false, true);
-		//drawTrajPts(trajs);
+		td.drawMMTrajs(tempTrajs, md, Gdiplus::Color::Green, false, false, false, true);
+		//drawTrajPts(tempTrajs);
 		//createGridIndex(createGridIndexForOneTraj);
 		//drawGridLine(Color::Green);
 		md.unlockBits();
-		md.saveBitmap("wymmtrajs.png");
+		md.saveBitmap("wy.png");
 		system("pause");
 		exit(0);
 	}	
-	/*test code ends*/
-	/**********************************************************/
 	
 
 	/**********************************************************/
@@ -3078,7 +3184,7 @@ void main()
 		createGridIndex(createGridIndexForOneTraj);
 		drawGridLine(Gdiplus::Color::Green);
 		md.unlockBits();
-		md.saveBitmap("map.png");
+		md.saveBitmap("wymmtrajs_failedPts.png");
 		system("pause");
 		exit(0);
 	}	

@@ -45,6 +45,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CSVPartition", "CSVPartitio
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "diffTest", "diffTest\diffTest.vcxproj", "{4FE866FE-A188-45FB-96E4-36B738EB174E}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "fileCombiner", "fileCombiner\fileCombiner.vcxproj", "{4F5A9FBA-9159-4661-A40B-3FA6EFAF2F24}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Mixed Platforms = Debug|Mixed Platforms
@@ -295,6 +297,17 @@ Global
 		{4FE866FE-A188-45FB-96E4-36B738EB174E}.Release|Win32.Build.0 = Release|Win32
 		{4FE866FE-A188-45FB-96E4-36B738EB174E}.Release|x64.ActiveCfg = Release|Win32
 		{4FE866FE-A188-45FB-96E4-36B738EB174E}.Release|x64.Build.0 = Release|Win32
+		{4F5A9FBA-9159-4661-A40B-3FA6EFAF2F24}.Debug|Mixed Platforms.ActiveCfg = Debug|Win32
+		{4F5A9FBA-9159-4661-A40B-3FA6EFAF2F24}.Debug|Mixed Platforms.Build.0 = Debug|Win32
+		{4F5A9FBA-9159-4661-A40B-3FA6EFAF2F24}.Debug|Win32.ActiveCfg = Debug|Win32
+		{4F5A9FBA-9159-4661-A40B-3FA6EFAF2F24}.Debug|Win32.Build.0 = Debug|Win32
+		{4F5A9FBA-9159-4661-A40B-3FA6EFAF2F24}.Debug|x64.ActiveCfg = Debug|Win32
+		{4F5A9FBA-9159-4661-A40B-3FA6EFAF2F24}.Release|Mixed Platforms.ActiveCfg = Release|Win32
+		{4F5A9FBA-9159-4661-A40B-3FA6EFAF2F24}.Release|Mixed Platforms.Build.0 = Release|Win32
+		{4F5A9FBA-9159-4661-A40B-3FA6EFAF2F24}.Release|Win32.ActiveCfg = Release|Win32
+		{4F5A9FBA-9159-4661-A40B-3FA6EFAF2F24}.Release|Win32.Build.0 = Release|Win32
+		{4F5A9FBA-9159-4661-A40B-3FA6EFAF2F24}.Release|x64.ActiveCfg = Release|Win32
+		{4F5A9FBA-9159-4661-A40B-3FA6EFAF2F24}.Release|x64.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

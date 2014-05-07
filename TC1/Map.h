@@ -1,5 +1,5 @@
 /* 
- * Last Updated at [2014/4/23 10:39] by wuhao
+ * Last Updated at [2014/5/7 14:52] by wuhao
  */
 #pragma once
 #include "GeoPoint.h"
@@ -76,10 +76,14 @@ public:
 	int insertNode(double lat, double lon); //插入一个新结点,返回新结点id
 	int insertEdge(Figure* figure, int startNodeId, int endNodeId); //在当前图中插入边,返回新边id
 	int splitEdge(int edgeId, double lat, double lon); //将edge在(lat,lon)点处分开成两段,(lat,lon)作为新结点加入,返回新结点的nodeId
-	void delEdge(int edgeId);
+	void delEdge(int edgeId, bool delBirectionEdges = true); //从地图中删除edgeId，如果第二个参数为true则同时删除反向路
 	void getMinMaxLatLon(string nodeFilePath);
 
-	void drawMap(Gdiplus::Color color, MapDrawer& md);
+	void drawMap(Gdiplus::Color color, MapDrawer& md); //画出地图
+	void drawDeletedEdges(Gdiplus::Color color, MapDrawer& md); //画出删除的路
+
+	void deleteEdgesRandomly(int delNum, double minEdgeLengthM); //在地图里随机删除长度不短于minEdgeLengthM的delNum条Edge，随机种子需自行在main中初始化
+	vector<Edge*> deletedEdges;
 
 //private:
 	int gridWidth, gridHeight;
