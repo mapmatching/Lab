@@ -2817,14 +2817,14 @@ void drawIntersection_v2(list<Traj*> trajs)
 			GeoPoint* pt = (*ptIter);
 			if (md.inArea(pt->lat, pt->lon) && pt->mmRoadId == -1)
 			{
-				md.drawPoint(Gdiplus::Color::Red, pt->lat, pt->lon);
+				md.drawPoint(Gdiplus::Color::Green, pt->lat, pt->lon);
 			}
 		}
 	}
 
-	double steadySpeed = 0.001;
-	double steadyTimeThreshold = 150;
-	double minSpeed = 5;
+	double steadySpeed = 0.01;
+	double steadyTimeThreshold = 200;
+	double minSpeed = 8;
 	for each (Traj* traj in trajs)
 	{
 		Traj::iterator ptIter = traj->begin(); ptIter++;
@@ -2840,10 +2840,22 @@ void drawIntersection_v2(list<Traj*> trajs)
 			if (md.inArea(pt->lat, pt->lon))
 			{
 				double dist = GeoPoint::distM(pt, prePt);
-				//if
-				if (dist < 5.0 && abs(pt->time - prePt->time) < steadyTimeThreshold && dist / abs(pt->time - prePt->time) < steadySpeed)
+				double speed = dist / (pt->time - prePt->time);
+				if (speed > steadySpeed)
 				{
-					if (steadyStatus == false)
+					lastSpeed = speed;
+					if (steadyStatus)
+					{
+						if (steadyTime < steadyTimeThreshold && steadyTime > 10 && lastSpeed >= minSpeed)
+						{
+							md.drawBigPoint(Gdiplus::Color::Red, prePt->lat, prePt->lon);
+						}
+						steadyStatus = false;
+					}
+				}
+				else if (speed <= steadySpeed && abs(pt->time - prePt->time) < steadyTimeThreshold)
+				{
+					if (steadyStatus == false && lastSpeed >= minSpeed)
 					{
 						steadyStatus = true;
 						steadyTime = abs(pt->time - prePt->time);
@@ -2853,22 +2865,76 @@ void drawIntersection_v2(list<Traj*> trajs)
 						steadyTime += abs(pt->time - prePt->time);
 					}
 				}
-				else
+				else //if (speed <= steadySpeed && abs(pt->time - prePt->time) >= steadyTimeThreshold)
 				{
-					if (steadyStatus)
-					{
-						if (steadyTime < steadyTimeThreshold && steadyTime > 10)
-						{
-							md.drawBigPoint(Gdiplus::Color::Black, prePt->lat, prePt->lon);
-						}
-						steadyStatus = false;
-					}
+					lastSpeed = speed;
+					steadyStatus = false;
 				}
+				
 			}
 		}
 	}
 }
 
+double calTrajLengthM(Traj* traj)
+{
+	//////////////////////////////////////////////////////////////////////////
+	///计算轨迹的长度，单位为M
+	//////////////////////////////////////////////////////////////////////////
+	
+	double lengthM = 0;
+	Figure::iterator ptIter = traj->begin(), nextPtIter = ptIter;
+	nextPtIter++;
+	while (1)
+	{
+		if (nextPtIter == traj->end())
+			break;
+		lengthM += GeoPoint::distM((*ptIter)->lat, (*ptIter)->lon, (*nextPtIter)->lat, (*nextPtIter)->lon);
+		ptIter++;
+		nextPtIter++;
+	}
+	return lengthM;
+}
+
+void eyeballTest()
+{
+	int count = 0;
+	int max = 10;
+	for (list<Traj*>::iterator trajIter = tempTrajs.begin(); trajIter!= tempTrajs.end();trajIter++)
+	{
+		if (count == max)
+		{
+			break;
+		}
+		if (calTrajLengthM(*trajIter) < 1500)
+		{
+			continue;
+		}
+		
+		md.newBitmap();
+		md.lockBits();
+		roadNetwork.drawMap(Gdiplus::Color::Blue, md);
+		TrajDrawer::drawOneTraj(*trajIter, md, Gdiplus::Color::Green);
+		bool unmatchedFlag = true;
+		for each (GeoPoint* pt in *(*trajIter))
+		{
+			//cout << pt->mmRoadId << endl;
+			if (pt->mmRoadId == -1)
+				continue;
+			//system("pause");
+			unmatchedFlag = false;
+			TrajDrawer::drawOneTraj(roadNetwork.edges[pt->mmRoadId]->figure, md, Gdiplus::Color::Red, true);
+		}
+		createGridIndex(createGridIndexForOneTraj);
+		drawGridLine(Gdiplus::Color::Green);
+		md.unlockBits();
+		count++;
+		if (unmatchedFlag == false)
+			md.saveBitmap("D:\\project\\LAB\\trajectory\\TC1\\MMTest\\" + StringOperator::intToString(count)+".png");
+	}
+	system("pause");
+	exit(0);
+}
 /////////////////////////////////////////我的算法///////////////////////////////////////////
 
 
@@ -3016,7 +3082,7 @@ void main()
 	/**********************************************************/
 	/*test code starts from here*/
 	///test random edge deletion code
-	roadNetwork.deleteEdgesRandomly(10, 100.0);
+	/*roadNetwork.deleteEdgesRandomly(10, 100.0);
 	md.newBitmap();
 	md.lockBits();
 	roadNetwork.drawMap(Gdiplus::Color::Blue, md);
@@ -3024,7 +3090,7 @@ void main()
 	md.unlockBits();
 	md.saveBitmap("edgeDeletion.png");
 	system("pause");
-	exit(0);
+	exit(0);*/
 	/*test code ends*/
 	/**********************************************************/
 	
@@ -3059,7 +3125,7 @@ void main()
 	}
 
 	/*画出十字路口点*/
-	if (1)
+	if (0)
 	{
 		trajFileName = "splitedTrajs.txt";
 		readStdTrajs(trajDir + trajFileName, tempTrajs);
@@ -3068,9 +3134,9 @@ void main()
 		md.newBitmap();
 		md.lockBits();
 		md.drawMap(Gdiplus::Color::Blue, mapFilePath);
-		drawIntersection(tempTrajs);
+		drawIntersection_v2(tempTrajs);
 		md.unlockBits();
-		md.saveBitmap("intersection.png");
+		md.saveBitmap("intersection_v2.png");
 		system("pause");
 		exit(0);
 	}
@@ -3123,17 +3189,19 @@ void main()
 	}
 
 /////////////////////////////////读入轨迹文件///////////////////////////////////////
-	trajFileName = "wy_extended_unmatched_trajs_smallarea.txt";
+	//trajFileName = "wy_extended_unmatched_trajs_smallarea.txt";
 	//trajFileName = "splitedTrajs.txt";
 	//trajFileName = "20110102_03.txt";
 	//trajFileName = "logs_20120105_20120106.txt";
-	//trajFileName = "wy_MMTrajs.txt";
-	readStdTrajs(trajDir + trajFileName, trajs);
-	//TrajReader tReader(trajDir + trajFileName);
-	//tReader.readTrajs(tempTrajs);
+	trajFileName = "wy_MMTrajs.txt";
+	//readStdTrajs(trajDir + trajFileName, trajs);
+	TrajReader tReader(trajDir + trajFileName);
+	tReader.readTrajs(tempTrajs);
 
 	cout << "traj's size = " << trajs.size() << endl;
 //////////////////////////////////////////////////////////////////////////////////
+
+	eyeballTest();
 
 	/*读入原始轨迹，然后将过长的切断输出至"splitedTrajs.txt"*/
 	if (0)
