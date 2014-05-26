@@ -1,5 +1,5 @@
 /* 
- * Last Updated at [2014/5/7 14:52] by wuhao
+ * Last Updated at [2014/5/26 11:25] by wuhao
  */
 #pragma once
 #include "GeoPoint.h"
@@ -63,33 +63,46 @@ public:
 	void setArea(MapDrawer& md); //将区域与md的区域保持一致,需在open之前或有参构造函数前调用
 	Map(); //默认构造函数,需要手动调用open()函数来初始化
 	Map(string folderDir, int gridWidth);  //在folderDir路径下载入地图文件,并以gridWidth列的粒度来创建索引
-
 	void open(string folderDir, int gridWidth);  //在folderDir路径下载入地图文件,并以gridWidth列的粒度来创建索引,适用于无参构造函数	
-	vector<Edge*> getNearEdges(double lat, double lon, double threshold) const; //返回距离(lat, lon)点严格小于threshold米的所有Edge*,会产生内存泄露
-	void getNearEdges(double lat, double lon, double threshold, vector<Edge*>& dest); //推荐版本
-	void getNearEdges(double lat, double lon, int k, vector<Edge*>& dest); //返回离(lat, lon)点距离最近的k条路段，存入dest
-	double shortestPathLength(int ID1, int ID2, double dist1, double dist2, double deltaT);
-	double distM(double lat, double lon, Edge* edge) const; //返回(lat,lon)点到edge的距离，单位为米
-	double distM(double lat, double lon, Edge* edge, double& prjDist) const;//同上，同时记录投影点到edge起点的距离存入prjDist，无投影则记为0
-	double distMFromTransplantFromSRC(double lat, double lon, Edge* edge, double& prjDist); //移植SRC版本：返回(lat,lon)点到edge的距离，单位为米；同时记录投影点到edge起点的距离存入prjDist
+
+
+	/*基础功能函数*/
 	int hasEdge(int startNodeId, int endNodeId) const; //判断startNodeId与endNodeId之间有无边,没有边返回-1，有边返回edgeId
 	int insertNode(double lat, double lon); //插入一个新结点,返回新结点id
 	int insertEdge(Figure* figure, int startNodeId, int endNodeId); //在当前图中插入边,返回新边id
 	int splitEdge(int edgeId, double lat, double lon); //将edge在(lat,lon)点处分开成两段,(lat,lon)作为新结点加入,返回新结点的nodeId
-	void delEdge(int edgeId, bool delBirectionEdges = true); //从地图中删除edgeId，如果第二个参数为true则同时删除反向路
 	void getMinMaxLatLon(string nodeFilePath);
-
 	void drawMap(Gdiplus::Color color, MapDrawer& md); //画出地图
+	double distM(double lat, double lon, Edge* edge) const; //返回(lat,lon)点到edge的距离，单位为米
+
+	/*Map Matching相关函数*/
+	vector<Edge*> getNearEdges(double lat, double lon, double threshold) const; //返回距离(lat, lon)点严格小于threshold米的所有Edge*,会产生内存泄露
+	void getNearEdges(double lat, double lon, double threshold, vector<Edge*>& dest); //推荐版本
+	void getNearEdges(double lat, double lon, int k, vector<Edge*>& dest); //返回离(lat, lon)点距离最近的k条路段，存入dest
+	double shortestPathLength(int ID1, int ID2, double dist1, double dist2, double deltaT);//求最短路，后两个参数啥意思我也不知道，不是我的代码
+	double distM(double lat, double lon, Edge* edge, double& prjDist) const;//同上，同时记录投影点到edge起点的距离存入prjDist，无投影则记为0
+	double distMFromTransplantFromSRC(double lat, double lon, Edge* edge, double& prjDist); //移植SRC版本：返回(lat,lon)点到edge的距离，单位为米；同时记录投影点到edge起点的距离存入prjDist
+	
+	
+	/*删路相关*/
+	void delEdge(int edgeId, bool delBirectionEdges = true); //从地图中删除edgeId，如果第二个参数为true则同时删除反向路
 	void drawDeletedEdges(Gdiplus::Color color, MapDrawer& md); //画出删除的路
+	void deleteEdgesRandomly(int delNum, double minEdgeLengthM); //在地图里随机删除长度不短于minEdgeLengthM的delNum条Edge(同时会删除反向路)，随机种子需自行在main中初始化
+	//增强版本，随机删除长度不短于minEdgeLengthM的delNum条Edge，
+	//同时删除的edge需满足到其距离小于aroundThresholdM的路段不超过aroundNumThreshold条（双向路以2计），
+	//并将其周围的这些路全部删除，随机种子需自行在main中初始化
+	//doOutput为true时将会把所有删除的路段号输出到文件（一行一个id）
+	void deleteEdgesRandomlyEx(int delNum, double minEdgeLengthM, double aroundThresholdM, int aroundNumThreshold, bool doOutput = true);
+	void deleteEdges(string path); //对于deleteEdgesRandomlyEx输出的所有删除的id号的文件读入后在路网中删除，保证调用此函数后的状态与调用deleteEdgesRandomlyEx()后的状态一样
+	vector<Edge*> deletedEdges; //记录被删除掉的边
 
-	void deleteEdgesRandomly(int delNum, double minEdgeLengthM); //在地图里随机删除长度不短于minEdgeLengthM的delNum条Edge，随机种子需自行在main中初始化
-	vector<Edge*> deletedEdges;
-
-//private:
+private:
 	int gridWidth, gridHeight;
 	double gridSizeDeg;
 	double strictThreshold = 0;
 	list<Edge*>* **grid;
+
+	//C++11标准，低版本不要这么写
 	//singapore half
 	double minLat = 1.22;
 	double maxLat = 1.5;
@@ -103,7 +116,7 @@ public:
 	double maxLon = 104.1155;*/
 
 	//washington full
-//minLat:45.559102, maxLat : 49.108823, minLon : -124.722781, maxLon : -116.846465
+	//minLat:45.559102, maxLat : 49.108823, minLon : -124.722781, maxLon : -116.846465
 	/*double minLat = 45.0;
 	double maxLat = 49.5;
 	double minLon = -125.0;
@@ -125,5 +138,8 @@ public:
 	void split(const string& src, const char& separator, vector<string>& dest);
 	double cosAngle(GeoPoint* pt1, GeoPoint* pt2, GeoPoint* pt3) const;
 	void test();
+	void findNearEdges(Edge* edge, list<Edge*>& dest, double thresholdM); //返回距离edge长度不超过thresholdM的路段
+	double distM(Edge* edge1, Edge* edge2, double threshold);
+	void getNearEdges(Edge* edge, double thresholdM, vector<Edge*>& dest);
 };
 

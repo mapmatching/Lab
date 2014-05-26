@@ -3082,15 +3082,17 @@ void main()
 	/**********************************************************/
 	/*test code starts from here*/
 	///test random edge deletion code
-	/*roadNetwork.deleteEdgesRandomly(10, 100.0);
+	//roadNetwork.deleteEdgesRandomly(10, 200.0);
+	//roadNetwork.deleteEdgesRandomlyEx(10, 300, 50, 8);
+	roadNetwork.deleteEdges("D:\\trajectory\\singapore_data\\experiments\\1\\deletedEdges.txt");
 	md.newBitmap();
 	md.lockBits();
 	roadNetwork.drawMap(Gdiplus::Color::Blue, md);
 	roadNetwork.drawDeletedEdges(Gdiplus::Color::Red, md);
 	md.unlockBits();
-	md.saveBitmap("edgeDeletion.png");
+	md.saveBitmap("edgeDeletion2.png");
 	system("pause");
-	exit(0);*/
+	exit(0);
 	/*test code ends*/
 	/**********************************************************/
 	
