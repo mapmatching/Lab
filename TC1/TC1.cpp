@@ -3118,10 +3118,36 @@ void drawTCCResult()
 {
 	//drawPt
 	ifstream ptFile("D:\\trajectory\\singapore_data\\experiments\\ours\\missPoints.txt");
+	vector<GeoPoint*> pts;
 	while (ptFile)
 	{
-		
+		double lat, lon;
+		ptFile >> lat >> lon;
+		if (ptFile.fail())
+			break;
+		GeoPoint* newPt = new GeoPoint(lat, lon);
+		pts.push_back(newPt);
 	}
+	md.newBitmap();
+	md.lockBits();
+	for (int i = 0; i < pts.size(); i++)
+	{
+		md.drawBigPoint(Gdiplus::Color::Red, pts[i]->lat, pts[i]->lon);
+	}
+	md.unlockBits();
+	md.saveBitmap("ourPts.png");
+
+	//drawRd
+	TrajReader tr("D:\\trajectory\\singapore_data\\experiments\\ours\\resultAll.txt");
+	list<Traj*> roads;
+	tr.readTrajs(roads);
+	TrajDrawer td;
+	md.newBitmap();
+	md.lockBits();
+	td.drawTrajs(roads, md, Gdiplus::Color::Black, true, true, false, false);
+	md.unlockBits();
+	md.saveBitmap("ourRoads.png");
+	exit(0);
 }
 /////////////////////////////////////////ÎÒµÄËã·¨///////////////////////////////////////////
 
@@ -3269,7 +3295,7 @@ void main()
 	printf("\n");
 
 /*¡ü¡ü¡ü¡ü¡ü¡ü¡ü¡ü¡ü¡ü¡ü¡ü¡ü¡ü¡ü¡ü¡ü¡ü¡ü¡ü¡ü¡ü¡ü¡ü¡ü¡ü¡ü¡ü¡ü¡ü¡ü¡ü¡ü¡ü¡ü¡ü¡ü¡ü¡ü¡üinitialization end¡ü¡ü¡ü¡ü¡ü¡ü¡ü¡ü¡ü¡ü¡ü¡ü¡ü¡ü¡ü¡ü¡ü¡ü¡ü¡ü¡ü¡ü¡ü¡ü¡ü¡ü¡ü¡ü¡ü¡ü¡ü¡ü¡ü¡ü¡ü¡ü¡ü¡ü¡ü¡ü*/
-
+	drawTCCResult();
 	
 	/**********************************************************/
 	/*test code starts from here*/
