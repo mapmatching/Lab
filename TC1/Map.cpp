@@ -766,10 +766,13 @@ int Map::splitEdge(int edgeId, double lat, double lon)
 void Map::delEdge(int edgeId, bool delBirectionEdges /* = true */)
 {
 	//【注意】可能会发生内存泄露，原edge没有被del掉
+	//【注意注意！】TODO：索引没有把路删除，解决办法只是将删掉的路的visited字段改成true临时应付了下而已
 	if (edges[edgeId] == NULL)
 		return;	
 	int startNodeId = edges[edgeId]->startNodeId;
 	int endNodeId = edges[edgeId]->endNodeId;
+	if (edges[edgeId])
+		edges[edgeId]->visited = true; //防止被索引找到
 	edges[edgeId] = NULL;
 	AdjNode* currentAdjNode = adjList[startNodeId];
 	while (currentAdjNode->next != NULL)
@@ -788,7 +791,9 @@ void Map::delEdge(int edgeId, bool delBirectionEdges /* = true */)
 		int reverseEdgeId = hasEdge(endNodeId, startNodeId);
 		if (reverseEdgeId == -1) //没有反向边
 			return;		
-		edges[reverseEdgeId] = NULL;
+		if (edges[reverseEdgeId])
+			edges[reverseEdgeId]->visited = true; //防止被索引找到
+		edges[reverseEdgeId] = NULL;		
 		AdjNode* currentAdjNode = adjList[endNodeId];
 		while (currentAdjNode->next != NULL)
 		{
@@ -1042,14 +1047,14 @@ double Map::distM_withThres(double lat, double lon, Edge* edge, double threshold
 			cout << "*iter = NULL";
 			system("pause");
 		}
-		if (!inArea(lat, lon))// || !inArea((*iter)->lat, (*iter)->lon))
+		/*if (!inArea(lat, lon))// || !inArea((*iter)->lat, (*iter)->lon))
 		{
 			cout << "not in area";
 			printf("(lat,lon) = (%lf,%lf), iter = (%lf, %lf)\n", lat, lon, (*iter)->lat, (*iter)->lon);
 			printf("minlat = %lf, maxlat = %lf\n", minLat, maxLat);
 			printf("minlon = %lf, maxlon = %lf\n", minLon, maxLon);
 			system("pause");
-		}
+		}*/
 		double tmpDist = GeoPoint::distM(lat, lon, (*iter)->lat, (*iter)->lon);
 		if (tmpDist < threshold)
 			return tmpDist;

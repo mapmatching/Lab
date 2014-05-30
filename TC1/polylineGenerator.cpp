@@ -306,10 +306,11 @@ void PolylineGenerator::genPolyline(list<Pt>& pts)
 		this->pts.push_back(pt);
 	}
 	initialization();
-	//生成10个控制点的polyline
+	//生成7个控制点的polyline
 	for (int i = 0; i < 7; i++)
 	{
 		optimizationEx();
+		//optimization();
 	}
 }
 
@@ -549,7 +550,7 @@ void PolylineGenerator::optimizationEx()
 		{
 			//直到这个点的调整幅度达到收敛阈值
 			//TEST: 先对每个点迭代3次
-			for (int iter = 0; iter < 1000; iter++)
+			for (int iter = 0; iter < 200; iter++)
 			{
 				double Gvi = calculate(polyline[i].x, polyline[i].y, i);
 				if (abs(Gvi - preGvi) / Gvi < convergeThreshold)
