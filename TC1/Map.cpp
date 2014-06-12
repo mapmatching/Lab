@@ -853,9 +853,9 @@ void Map::drawMap(Gdiplus::Color color, MapDrawer& md)
 		{
 			if (nextPtIter == edges[i]->figure->end())
 				break;
-			md.drawLine(color, (*ptIter)->lat, (*ptIter)->lon, (*nextPtIter)->lat, (*nextPtIter)->lon);
-			md.drawBigPoint(Gdiplus::Color::Black, (*ptIter)->lat, (*ptIter)->lon);
-			md.drawBigPoint(Gdiplus::Color::Black, (*nextPtIter)->lat, (*nextPtIter)->lon);
+			md.drawBoldLine(color, (*ptIter)->lat, (*ptIter)->lon, (*nextPtIter)->lat, (*nextPtIter)->lon);
+			//md.drawBigPoint(Gdiplus::Color::Black, (*ptIter)->lat, (*ptIter)->lon);
+			//md.drawBigPoint(Gdiplus::Color::Black, (*nextPtIter)->lat, (*nextPtIter)->lon);
 			ptIter++;
 			nextPtIter++;
 		}
@@ -884,17 +884,17 @@ void Map::drawDeletedEdges(Gdiplus::Color color, MapDrawer& md)
 			
 			/**********************************************************/
 			/*test code starts from here*/
-			if (deletedEdges[i]->visited == true)
-			{
-				md.drawBoldLine(Gdiplus::Color::Aqua, (*ptIter)->lat, (*ptIter)->lon, (*nextPtIter)->lat, (*nextPtIter)->lon);
-			}
+			//if (deletedEdges[i]->visited == true)
+			//{
+			//	md.drawBoldLine(Gdiplus::Color::Aqua, (*ptIter)->lat, (*ptIter)->lon, (*nextPtIter)->lat, (*nextPtIter)->lon);
+			//}
 			
 			/*test code ends*/
 			/**********************************************************/
 			
 			
-			md.drawBigPoint(Gdiplus::Color::Black, (*ptIter)->lat, (*ptIter)->lon);
-			md.drawBigPoint(Gdiplus::Color::Black, (*nextPtIter)->lat, (*nextPtIter)->lon);
+			//md.drawBigPoint(Gdiplus::Color::Black, (*ptIter)->lat, (*ptIter)->lon);
+			//md.drawBigPoint(Gdiplus::Color::Black, (*nextPtIter)->lat, (*nextPtIter)->lon);
 			ptIter++;
 			nextPtIter++;
 		}

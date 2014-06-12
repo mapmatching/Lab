@@ -244,7 +244,7 @@ void MapDrawer::drawMap(Gdiplus::Color color, std::string mapFilePath)
 			lon1 = lon2;
 			lat2 = atof(substrs[i + 2].c_str());
 			lon2 = atof(substrs[i + 3].c_str());
-			drawLine(color_, lat1, lon1, lat2, lon2);
+			drawLine(color, lat1, lon1, lat2, lon2);
 			drawBigPoint(Gdiplus::Color::Black, lat1, lon1);
 			drawBigPoint(Gdiplus::Color::Black, lat2, lon2);
 		}

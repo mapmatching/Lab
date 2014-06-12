@@ -46,7 +46,7 @@ double limitDist = 400; //轨迹点之间超过300m的prune掉
 double limitTime = 100; //采样间隔大于60秒的prune掉
 
 //grid index
-int gridWidth = 500;
+int gridWidth = 1200;
 int gridHeight;
 double gridSizeDeg;
 list<IndexedTraj*> **grid = NULL;
@@ -2561,7 +2561,7 @@ void drawTrajPts(list<Traj*>& trajs)
 		{
 			if ((*ptIter)->mmRoadId != -1) //匹配成功
 			{
-				md.drawPoint(Gdiplus::Color::Green, (*ptIter)->lat, (*ptIter)->lon);
+				//md.drawPoint(Gdiplus::Color::Green, (*ptIter)->lat, (*ptIter)->lon);
 			}
 			else //匹配失败
 			{
@@ -3209,8 +3209,8 @@ void main()
 	string mapFilePath = "D:\\trajectory\\singapore_data\\singapore_map\\WA_EdgeGeometry.txt";
 	//string trajDir = "D:\\trajectory\\singapore_data\\20110102_03\\";	
 	//string trajDir = "D:\\trajectory\\singapore_data\\20120101_06\\";
-	//string trajDir = "D:\\trajectory\\singapore_data\\201202\\every day\\";
-	trajDir = "D:\\trajectory\\singapore_data\\experiments\\90s\\";
+	string trajDir = "D:\\trajectory\\singapore_data\\201202\\every day\\";
+	//trajDir = "D:\\trajectory\\singapore_data\\experiments\\90s\\";
 	vector<string> trajFolders;
 	string trajFileName;
 	//trajFolders.push_back(trajDir + "20110110_11\\");
@@ -3291,18 +3291,26 @@ void main()
 
 	roadNetwork.setArea(md);
 	roadNetwork.open("D:\\trajectory\\singapore_data\\singapore_map\\", (int)(500.0 * zoomingRate));
-	roadNetwork.deleteEdges("D:\\trajectory\\singapore_data\\experiments\\1\\deletedEdges.txt");
+	//roadNetwork.deleteEdges("D:\\trajectory\\singapore_data\\experiments\\3\\deletedEdges.txt");
+	//roadNetwork.drawDeletedEdges(Color::)
 	printf("\n");
-
+	md.setResolution(1000);
+	md.newBitmap();
+	md.lockBits();
+	roadNetwork.drawMap(Gdiplus::Color::Black, md);
+	md.unlockBits();
+	md.saveBitmap("map demo.png");
+	exit(0);
 /*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑initialization end↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
-	drawTCCResult();
+	//drawTCCResult();
 	
 	/**********************************************************/
 	/*test code starts from here*/
 	///test random edge deletion code
 	//roadNetwork.deleteEdgesRandomly(10, 200.0);
 	//roadNetwork.deleteEdgesRandomlyEx(10, 300, 50, 8);
-	/*roadNetwork.deleteEdges("D:\\trajectory\\singapore_data\\experiments\\1\\deletedEdges.txt");
+	/*roadNetwork.deleteEdges("D:\\trajectory\\singapore_data\\experiments\\3\\deletedEdges.txt");
+	md.setResolution(1000);
 	md.newBitmap();
 	md.lockBits();
 	roadNetwork.drawMap(Gdiplus::Color::Blue, md);
@@ -3409,14 +3417,14 @@ void main()
 	}
 
 /////////////////////////////////读入轨迹文件///////////////////////////////////////
-	trajFileName = "wy_extended_unmatched_trajs_smallarea.txt";
+	//trajFileName = "wy_extended_unmatched_trajs_smallarea.txt";
 	//trajFileName = "splitedTrajs.txt";
 	//trajFileName = "20110102_03.txt";
 	//trajFileName = "logs_20120207_20120208.txt";
-	//trajFileName = "wy_MMTrajs.txt";
-	readStdTrajs(trajDir + trajFileName, trajs);
-	//TrajReader tReader(trajDir + trajFileName);
-	//tReader.readTrajs(tempTrajs);
+	trajFileName = "wy_MMTrajs1.txt";
+	//readStdTrajs(trajDir + trajFileName, tempTrajs);
+	TrajReader tReader(trajDir + trajFileName);
+	tReader.readTrajs(tempTrajs,800000);
 
 	cout << "traj's size = " << trajs.size() << endl;
 //////////////////////////////////////////////////////////////////////////////////
@@ -3445,20 +3453,21 @@ void main()
 	//画使用viterbi MM后的轨迹点
 	if (0)
 	{
+		md.setResolution(3000);
 		md.newBitmap();
 		md.lockBits();
-		md.drawMap(Gdiplus::Color::Blue, mapFilePath);
+		md.drawMap(Gdiplus::Color::Black, mapFilePath);
 		TrajDrawer td;
 		td.drawMMTrajs(tempTrajs, md, Gdiplus::Color::Green, false, false, false, true);
 		//drawTrajPts(tempTrajs);
-		//createGridIndex(createGridIndexForOneTraj);
-		//drawGridLine(Color::Green);
+		createGridIndex(createGridIndexForOneTraj);
+		drawGridLine(Gdiplus::Color::Green);
 		md.unlockBits();
-		md.saveBitmap(trajDir + "wy2.png");
+		md.saveBitmap(trajDir + "exp.png");
 		system("pause");
 		exit(0);
 	}	
-	
+
 
 	/**********************************************************/
 	/*test code starts from here*/
