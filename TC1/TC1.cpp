@@ -3272,6 +3272,7 @@ void main()
 		minLon = md.minLon;
 		maxLon = md.maxLon;		
 	}
+	system("pause");
 	/*zooming part end*/
 	
 	/**********************************************************/
