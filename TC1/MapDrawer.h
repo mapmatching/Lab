@@ -1,5 +1,5 @@
 /* 
- * Last Updated at [2014/4/15 16:29] by wuhao
+ * Last Updated at [2014/6/26 11:31] by wuhao
  */
 
 /*
@@ -32,6 +32,7 @@
 #include <io.h>
 #include <fstream>
 #include <iostream>
+#include "GeoPoint.h"
 //using namespace Gdiplus;
 #pragma comment(lib,"gdiplus.lib")
 
@@ -39,10 +40,7 @@
 class MapDrawer
 {
 public:
-	double minLat;
-	double maxLat;
-	double minLon;
-	double maxLon;
+	Area* area;
 	int r_width; //画布像素宽度
 	int r_height; //画布像素高度
 
@@ -56,6 +54,7 @@ public:
 	void drawBigPoint(Gdiplus::Color color, double lat, double lon); //在地里坐标(lat,lon)对应的图上画一个十字点
 	void drawLine(Gdiplus::Color color, int x1, int y1, int x2, int y2);
 	void drawLine(Gdiplus::Color color, double lat1, double lon1, double lat2, double lon2);
+	void drawBoldLine(Gdiplus::Color color, int x1, int y1, int x2, int y2);
 	void drawBoldLine(Gdiplus::Color color, double lat1, double lon1, double lat2, double lon2); //画一条粗线
 	void drawMap(Gdiplus::Color color, std::string mapFilePath); //画地图，mapFilePath为地图文件路径，需OSM标准格式
 
@@ -64,7 +63,7 @@ public:
 	void unlockBits(); //所有画图操作结束后必须调用这个，以提交更改
 	void saveBitmap(std::string fileName); //保存为png图片，fileName为文件路径
 	void setArea(double _minLat, double _maxLat, double _minLon, double _maxLon); //设置轨迹有效区域，在此范围内的轨迹都会被画在画布上
-//	void setArea(Map& map); //设置有效区域，与map保持一致
+	void setArea(Area* area);
 	void setResolution(int width); //设置画布宽度，高度由经纬度区域按比例自动计算	
 	void setResolution(int width, int height); //自定义画布，不推荐使用
 	bool inArea(double lat, double lon); //判断轨迹经纬度是否在指定画图区域内
@@ -83,6 +82,4 @@ private:
 	void MapDrawer::bresenhamDrawLine_y(Gdiplus::Color color, int x1, int y1, int x2, int y2);
 	int GetEncoderClsid(const WCHAR* format, CLSID* pClsid);
 	wchar_t* CharToWchar(const char* c);
-	
-	void split(const std::string& src, const std::string& separator, std::vector<std::string>& dest);
 };

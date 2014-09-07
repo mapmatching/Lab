@@ -1,5 +1,5 @@
 /* 
- * Last Updated at [2014/5/26 11:14] by wuhao
+ * Last Updated at [2014/9/4 19:58] by wuhao
  */
 #include "Map.h"
 
@@ -11,15 +11,16 @@ bool smallerInDist(pair<Edge*, double>& c1, pair<Edge*, double>& c2);
 //////////////////////////////////////////////////////////////////////////
 Map::Map()
 {
-
+	area = new Area();
 }
 
-Map::Map(string folderDir, int gridWidth)
+Map::Map(string folderDir, Area* area, int gridWidth /* = 0 */ )
 {
+	this->setArea(area);
 	this->open(folderDir, gridWidth);
 }
 
-void Map::open(string folderDir, int gridWidth)
+void Map::openOld(string folderDir, int gridWidth /* = 0*/)
 {
 	/*文件目录结构为
 	* folderDir
@@ -30,7 +31,7 @@ void Map::open(string folderDir, int gridWidth)
 	//////////////////////////////////////////////////////////////////////////
 	///排除规则：当edge的两个端点都在area外则不加入（node和edge对应位置放NULL）
 	//////////////////////////////////////////////////////////////////////////
-	
+
 	this->gridWidth = gridWidth;
 	int count = 0;
 	//////////////////////////////////////////////////////////////////////////
@@ -84,7 +85,7 @@ void Map::open(string folderDir, int gridWidth)
 	{
 		if (geometryIfs.fail())
 			break;
-		std::vector<std::string> substrs;		
+		std::vector<std::string> substrs;
 		/*singapore ver*/
 		split(strLine, "^", substrs);
 		//split(strLine, '^', substrs);
@@ -96,9 +97,9 @@ void Map::open(string folderDir, int gridWidth)
 		double endLon = atof(substrs[substrs.size() - 1].c_str());
 		if (!inArea(startLat, startLon) && !inArea(endLat, endLon))
 		{
-		//	printf("start(%lf,%lf), end(%lf,%lf)\n", startLat, startLon, endLat, endLon);
-		//	printf("minlat = %lf, maxlat = %lf\n", minLat, maxLat);
-		//	system("pause");
+			//	printf("start(%lf,%lf), end(%lf,%lf)\n", startLat, startLon, endLat, endLon);
+			//	printf("minlat = %lf, maxlat = %lf\n", minLat, maxLat);
+			//	system("pause");
 			edges.push_back(NULL);
 			count++;
 			continue;
@@ -109,11 +110,11 @@ void Map::open(string folderDir, int gridWidth)
 			double lat, lon;
 			lat = atof(substrs[i].c_str());
 			lon = atof(substrs[i + 1].c_str());
-		//	if (inArea(lat, lon))
-		//	{
-				GeoPoint* pt = new GeoPoint(lat, lon);
-				figure->push_back(pt);
-		//	}
+			//	if (inArea(lat, lon))
+			//	{
+			GeoPoint* pt = new GeoPoint(lat, lon);
+			figure->push_back(pt);
+			//	}
 			//else
 			//{
 			//	continueFlag = true;
@@ -121,42 +122,9 @@ void Map::open(string folderDir, int gridWidth)
 			//	count++;
 			//	break;
 			//}
-			
-		}
-		/*washington ver*/
-		/*split(strLine, '^', substrs);
-		int edgeId = atoi(substrs[0].c_str());
-		double startLat = atof(substrs[4].c_str());
-		double startLon = atof(substrs[5].c_str());
-		double endLat = atof(substrs[substrs.size() - 2].c_str());
-		double endLon = atof(substrs[substrs.size() - 1].c_str());
-		if (!inArea(startLat, startLon) || !inArea(endLat, endLon))
-		{
-			edges.push_back(NULL);
-			count++;
-			continue;
-		}
-		Figure* figure = new Figure();
-		for (int i = 4; i < substrs.size() - 1; i += 2)
-		{
-			double lat, lon;
-			lat = atof(substrs[i].c_str());
-			lon = atof(substrs[i + 1].c_str());
-			if (inArea(lat, lon))
-			{
-				GeoPoint* pt = new GeoPoint(lat, lon);
-				figure->push_back(pt);
-			}
-			else
-			{
-				continueFlag = true;
-				edges.push_back(NULL);
-				count++;
-				break;
-			}
 
-		}*/
-		///TODO: continueFlag是干啥的忘记了
+		}
+		///[TODO]:continueFlag是干啥的忘记了
 		if (continueFlag)
 		{
 			delete figure;
@@ -201,7 +169,7 @@ void Map::open(string folderDir, int gridWidth)
 		edgeIfs >> edgeId >> startNodeId >> endNodeId >> dummy;
 		if (edgeIfs.fail())
 			break;
-		if (inArea(startNodeId) && inArea(endNodeId) && edges[edgeId] != NULL)
+		if (nodes[startNodeId]!=NULL && nodes[endNodeId]!=NULL && edges[edgeId] != NULL)
 		{
 			insertEdge(edgeId, startNodeId, endNodeId);
 		}
@@ -215,12 +183,114 @@ void Map::open(string folderDir, int gridWidth)
 	printf(">> creating grid index finished\n");
 }
 
-void Map::setArea(MapDrawer& md)
+void Map::open(string folderDir, int gridWidth /* = 0 */ )
 {
-	this->minLat = md.minLat;
-	this->maxLat = md.maxLat;
-	this->minLon = md.minLon;
-	this->maxLon = md.maxLon;
+	/*文件目录结构为,文件名要对应
+	* folderDir
+	* |-nodeOSM.txt
+	* |-edgeOSM.txt
+	*/
+	//////////////////////////////////////////////////////////////////////////
+	///排除规则：当edge的两个端点都在area外则不加入（node和edge对应位置放NULL）
+	///node不管在不在area内全部保留
+	//////////////////////////////////////////////////////////////////////////
+	
+	this->gridWidth = gridWidth;
+	int count = 0;
+	//////////////////////////////////////////////////////////////////////////
+	//读取nodeOSM.txt
+	//格式：nodeId \t lat \t lon \n
+	//////////////////////////////////////////////////////////////////////////
+	ifstream nodeIfs(folderDir + "nodeOSM.txt");
+	if (!nodeIfs)
+	{
+		cout << "open " + folderDir + "nodeOSM.txt" + " error!\n";
+		system("pause");
+		exit(0);
+	}
+	while (nodeIfs)
+	{
+		double lat, lon;
+		int nodeId;
+		GeoPoint* pt;
+		nodeIfs >> nodeId >> lat >> lon;
+		if (nodeIfs.fail())
+			break;
+		if (inArea(lat, lon))
+			pt = new GeoPoint(lat, lon);
+		else
+		{
+			//pt = NULL; //[ATTENTION]node在区域外不想保留用此句(edge构造时会产生bug，须自行处理)
+			pt = new GeoPoint(lat, lon);
+			count++;
+		}
+		nodes.push_back(pt);
+	}
+	printf("nodes count = %d\n", nodes.size());
+	printf("nodes not in area count = %d\n", count);
+	nodeIfs.close();
+
+	//////////////////////////////////////////////////////////////////////////
+	//读取edgeOSM.txt
+	//格式：edgeOSM.txt: edgeId \t startNodeId \t endNodeId \t figureNodeCount \t figure1Lat \t figure1Lon \t ... figureNLat \t figureNLon \n  
+	//////////////////////////////////////////////////////////////////////////
+	count = 0;
+	std::ifstream edgeIfs(folderDir + "edgeOSM.txt");
+	if (!edgeIfs)
+	{
+		cout << "open " + folderDir + "WedgeOSM.txt" + " error!\n";
+		system("pause");
+		exit(0);
+	}
+	//初始化邻接表
+	for (int i = 0; i < nodes.size(); i++)
+	{
+		AdjNode* head = new AdjNode();
+		head->endPointId = i;
+		head->next = NULL;
+		adjList.push_back(head);
+	}
+	while (edgeIfs)
+	{
+		int edgeId, startNodeId, endNodeId, figureCount;
+		edgeIfs >> edgeId >> startNodeId >> endNodeId >> figureCount;
+		
+		Figure* figure = new Figure();
+		for (int i = 0; i < figureCount; i++)
+		{
+			double lat, lon;
+			edgeIfs >> lat >> lon;
+			figure->push_back(new GeoPoint(lat, lon));
+		}
+		if (edgeIfs.fail())
+			break;
+		if (!inArea(nodes[startNodeId]->lat, nodes[startNodeId]->lon) && !inArea(nodes[endNodeId]->lat, nodes[endNodeId]->lon))
+		{
+			edges.push_back(NULL);
+			count++;
+			continue;
+		}
+		Edge* edge = new Edge();
+		edge->id = edgeId;
+		edge->visited = false;
+		edge->figure = figure;
+		edge->lengthM = calEdgeLength(figure);
+		edges.push_back(edge);
+		insertEdge(edgeId, startNodeId, endNodeId);
+	}
+	
+	printf("edges count = %d\n", edges.size());
+	printf("not in area edges count = %d\n", count);
+	edgeIfs.close();
+	printf(">> reading map finished\n");
+	createGridIndex();
+	printf(">> creating grid index finished\n");
+}
+
+void Map::setArea(Area* area)
+{
+	//[ATTENTION][MEMORY_LEAK]这里并没有将原area的内存给回收，可能会造成内存泄露
+	this->area = area;
 }
 
 vector<Edge*> Map::getNearEdges(double lat, double lon, double threshold) const
@@ -279,6 +349,10 @@ void Map::getNearEdges(double lat, double lon, double threshold, vector<Edge*>& 
 	//////////////////////////////////////////////////////////////////////////
 	///返回(lat, lon)周围距离小于threshold米的所有路段
 	//////////////////////////////////////////////////////////////////////////
+	if (!inArea(lat, lon))
+	{
+		printf("[异常](%lf, %lf)不在区域内 in func Map::getNearEdges(double lat, double lon, double threshold, vector<Edge*>& dest)\n");
+	}
 	dest.clear();
 	vector<Edge*> fail;
 	int gridSearchRange = int(threshold / (gridSizeDeg * GeoPoint::geoScale)) + 1;
@@ -304,7 +378,7 @@ void Map::getNearEdges(double lat, double lon, double threshold, vector<Edge*>& 
 				if (!((*iter)->visited))
 				{
 					(*iter)->visited = true;
-					double dist = distM_withThres(lat, lon, (*iter), threshold);
+					double dist =  distM_withThres(lat, lon, (*iter), threshold);
 					if (dist < threshold)
 						dest.push_back((*iter));
 					else
@@ -470,14 +544,14 @@ double Map::distM(double lat, double lon, Edge* edge) const
 	while (nextIter != edge->figure->end())
 	{
 		//有投影
-		GeoPoint* pt = new GeoPoint(lat, lon);
-		if (cosAngle(pt, (*iter), (*nextIter)) <= 0 && cosAngle(pt, (*nextIter), (*iter)) <= 0)
+		GeoPoint pt(lat, lon);
+		if (cosAngle(&pt, (*iter), (*nextIter)) <= 0 && cosAngle(&pt, (*nextIter), (*iter)) <= 0)
 		{
 			double A = ((*nextIter)->lat - (*iter)->lat);
 			double B = -((*nextIter)->lon - (*iter)->lon);
 			double C = (*iter)->lat * ((*nextIter)->lon - (*iter)->lon)
 				- (*iter)->lon * ((*nextIter)->lat - (*iter)->lat);
-			double tmpDist = abs(A * pt->lon + B * pt->lat + C) / sqrt(A * A + B * B);
+			double tmpDist = abs(A * pt.lon + B * pt.lat + C) / sqrt(A * A + B * B);
 			tmpDist *= GeoPoint::geoScale;
 			if (minDist > tmpDist)
 				minDist = tmpDist;
@@ -765,6 +839,7 @@ int Map::splitEdge(int edgeId, double lat, double lon)
 
 void Map::delEdge(int edgeId, bool delBirectionEdges /* = true */)
 {
+	//邻接表中的这条边的邻接节点会被确确实实地删除
 	//【注意】可能会发生内存泄露，原edge没有被del掉
 	//【注意注意！】TODO：索引没有把路删除，解决办法只是将删掉的路的visited字段改成true临时应付了下而已
 	if (edges[edgeId] == NULL)
@@ -809,7 +884,7 @@ void Map::delEdge(int edgeId, bool delBirectionEdges /* = true */)
 	}
 }
 
-Gdiplus::Color randomColor();
+//Gdiplus::Color randomColor();
 
 void Map::getMinMaxLatLon(string nodeFilePath)
 {
@@ -820,10 +895,10 @@ void Map::getMinMaxLatLon(string nodeFilePath)
 		system("pause");
 		exit(0);
 	}
-	minLon = 999;
-	maxLon = -999;
-	minLat = 999;
-	maxLat = -999;
+	area->minLon = 999;
+	area->maxLon = -999;
+	area->minLat = 999;
+	area->maxLat = -999;
 	while (nodeIfs)
 	{
 		double lat, lon;
@@ -831,12 +906,12 @@ void Map::getMinMaxLatLon(string nodeFilePath)
 		nodeIfs >> nodeId >> lat >> lon;
 		if (nodeIfs.fail())
 			break;
-		if (lon < minLon) minLon = lon;
-		if (lon > maxLon) maxLon = lon;
-		if (lat < minLat) minLat = lat;
-		if (lat > maxLat) maxLat = lat;
+		if (lon < area->minLon) area->minLon = lon;
+		if (lon > area->maxLon) area->maxLon = lon;
+		if (lat < area->minLat) area->minLat = lat;
+		if (lat > area->maxLat) area->maxLat = lat;
 	}
-	printf("minLat:%lf, maxLat:%lf, minLon:%lf, maxLon:%lf\n", minLat, maxLat, minLon, maxLon);
+	printf("minLat:%lf, maxLat:%lf, minLon:%lf, maxLon:%lf\n", area->minLat, area->maxLat, area->minLon, area->maxLon);
 	nodeIfs.close();
 }
 
@@ -848,14 +923,14 @@ void Map::drawMap(Gdiplus::Color color, MapDrawer& md)
 			continue;
 		Figure::iterator ptIter = edges[i]->figure->begin(), nextPtIter = ptIter;                                                     
 		nextPtIter++;
-		Gdiplus::Color rndColor = randomColor();
+		//Gdiplus::Color rndColor = randomColor();
 		while (1)
 		{
 			if (nextPtIter == edges[i]->figure->end())
 				break;
-			md.drawBoldLine(color, (*ptIter)->lat, (*ptIter)->lon, (*nextPtIter)->lat, (*nextPtIter)->lon);
-			//md.drawBigPoint(Gdiplus::Color::Black, (*ptIter)->lat, (*ptIter)->lon);
-			//md.drawBigPoint(Gdiplus::Color::Black, (*nextPtIter)->lat, (*nextPtIter)->lon);
+			md.drawLine(color, (*ptIter)->lat, (*ptIter)->lon, (*nextPtIter)->lat, (*nextPtIter)->lon);
+			md.drawBigPoint(Gdiplus::Color::Black, (*ptIter)->lat, (*ptIter)->lon);
+			md.drawBigPoint(Gdiplus::Color::Black, (*nextPtIter)->lat, (*nextPtIter)->lon);
 			ptIter++;
 			nextPtIter++;
 		}
@@ -864,8 +939,6 @@ void Map::drawMap(Gdiplus::Color color, MapDrawer& md)
 
 void Map::drawDeletedEdges(Gdiplus::Color color, MapDrawer& md)
 {
-	cout << deletedEdges.size() << endl;
-	system("pause");
 	for (int i = 0; i < deletedEdges.size(); i++)
 	{
 		if (deletedEdges[i] == NULL || deletedEdges[i]->figure == NULL)
@@ -936,7 +1009,7 @@ void Map::deleteEdgesRandomlyEx(int delNum, double minEdgeLengthM, double around
 	int count = 0;
 	while (1)
 	{
-		if (count == delNum)
+		if (count >= delNum)
 			break;
 		if (edges[victimId = int(((double)rand()) / RAND_MAX * (edges.size() - 1))] == NULL)
 			continue;
@@ -948,7 +1021,7 @@ void Map::deleteEdgesRandomlyEx(int delNum, double minEdgeLengthM, double around
 			continue;
 		deletedEdges.push_back(edges[victimId]);
 		edges[victimId]->visited = true; //
-		cout << "delete " << victimId << endl;
+		cout << count << ": delete " << victimId << endl;
 		int reverseVictimId = hasEdge(edges[victimId]->endNodeId, edges[victimId]->startNodeId);
 		if (reverseVictimId != -1)
 		{
@@ -957,24 +1030,32 @@ void Map::deleteEdgesRandomlyEx(int delNum, double minEdgeLengthM, double around
 			cout << "delete reverse " << reverseVictimId << endl;
 		}
 		delEdge(victimId);
+		count++;
 		//删除所有附近的路
 		for each (Edge* nearEdge in nearEdges)
 		{
 			if (edges[nearEdge->id] == NULL)
 				continue;
+			if (nearEdge->id == reverseVictimId)
+				continue;
+			
 			deletedEdges.push_back(nearEdge);
-			cout << "\tdelete " << nearEdge->id << endl;
+			nearEdge->visited = true; //
+			cout << count << ":\tdelete " << nearEdge->id << endl;
 			int reverseNearEdgeId = hasEdge(nearEdge->endNodeId, nearEdge->startNodeId);
-			if (reverseNearEdgeId != -1)
+			if (reverseNearEdgeId != -1 && edges[reverseNearEdgeId] != NULL)
 			{
 				deletedEdges.push_back(edges[reverseNearEdgeId]);
+				edges[reverseNearEdgeId]->visited = true; //
 				cout << "\tdelete reverse " << reverseNearEdgeId << endl;
 			}
-			delEdge(nearEdge->id);			
+			delEdge(nearEdge->id);	
+			count++;
+			if (count >= delNum)
+				break;
 		}
-		count++;
 	}
-	cout << ">> randomly deleted " << delNum << " edges" << endl;
+	cout << ">> randomly deleted " << count << " edges" << endl;
 	if (doOutput)
 	{
 		ofstream ofs("deletedEdges.txt");
@@ -982,12 +1063,298 @@ void Map::deleteEdgesRandomlyEx(int delNum, double minEdgeLengthM, double around
 		{
 			cout << "open deletedEdges.txt error" << endl;
 		}
+		cout << deletedEdges.size() << endl;
+		//system("pause");
 		for (int i = 0; i < deletedEdges.size(); i++)
 		{
+			//printf("%d: %d\n", i, deletedEdges[i]->id);
+			//cout << this->deletedEdges.size() << endl;
 			ofs << deletedEdges[i]->id << endl;
 		}
 		ofs.close();
 	}	
+}
+
+void Map::deleteIntersectionType1(int delNum, double minEdgeLengthM, bool doOutput /* = true */)
+{
+	//////////////////////////////////////////////////////////////////////////
+	///删除类型1的路：即删除一条路，共要删除delNum条
+	///其中删除路的长度需要满足超过minEdgeLengthM
+	///删除过程中挑选周围比较空旷的路删
+	//////////////////////////////////////////////////////////////////////////
+	cout << "start deleting edges" << endl;
+	int victimId;
+	int count = 0;
+	while (1)
+	{ 
+		if (count >= delNum)
+			break;
+		if (edges[victimId = int(((double)rand()) / RAND_MAX * (edges.size() - 1))] == NULL)
+			continue;
+		if (edges[victimId]->lengthM < minEdgeLengthM)
+			continue;
+		if (edges[victimId]->startNodeId == edges[victimId]->endNodeId)
+			continue;
+		
+		
+		//检测这条候选路段是不是周围比较空旷
+		vector<Edge*> nearEdges;
+		getNearEdges(edges[victimId], 50.0, nearEdges);
+		double minNearEdgeDistM = 99999.0;
+		bool hasNearedgeAlreayDeleted = false;
+		for each (Edge* nearEdge in nearEdges)
+		{
+			//cal mindist <nearEdge, victimEdge>
+			double dist = distM(edges[victimId], nearEdge);
+			if (dist > eps && dist < minNearEdgeDistM)
+			{
+				minNearEdgeDistM = dist;
+			}
+			if (nearEdge->visitedExtern == true && dist <= 1) //邻接边已经被删则跳过
+			{
+				//system("pause");
+				hasNearedgeAlreayDeleted = true;
+				break;
+			}
+		}
+		if (hasNearedgeAlreayDeleted || minNearEdgeDistM < 50.0) //如果附近50m内有其他路则不考虑这个路段
+			continue;
+		
+		deletedEdges.push_back(edges[victimId]);
+		//edges[victimId]->visited = true; //
+		edges[victimId]->visitedExtern = true;
+		cout << count+1 << ": delete " << victimId << endl;
+		int reverseVictimId = hasEdge(edges[victimId]->endNodeId, edges[victimId]->startNodeId);
+		if (reverseVictimId != -1 && edges[reverseVictimId] != NULL)
+		{
+			deletedEdges.push_back(edges[reverseVictimId]);
+			//edges[reverseVictimId]->visited = true; //
+			edges[reverseVictimId]->visitedExtern = true;
+			cout << "delete reverse " << reverseVictimId << endl;
+		}
+		//delEdge(victimId);
+		count++;
+	}
+
+	for (int i = 0; i < deletedEdges.size(); i++)
+	{
+		delEdge(deletedEdges[i]->id);
+	}
+
+	cout << ">> randomly deleted " << count << " edges" << endl;
+	if (doOutput)
+	{
+		ofstream ofs("deletedEdgesType1.txt");
+		if (!ofs)
+		{
+			cout << "open deletedEdgesType1.txt error" << endl;
+		}
+		cout << deletedEdges.size() << endl;
+		for (int i = 0; i < deletedEdges.size(); i++)
+		{
+			//printf("%d: %d\n", i, deletedEdges[i]->id);
+			//cout << this->deletedEdges.size() << endl;
+			ofs << deletedEdges[i]->id << endl;
+		}
+		ofs.close();
+	}
+}
+
+void Map::deleteIntersectionType2(int delNum, double minEdgeLengthM, bool doOutput /* = true */)
+{
+	//////////////////////////////////////////////////////////////////////////
+	///删除类型2的路：即十字路口包含的四条路（双向为8条），共要删除delNum个路口
+	///其中删除路的长度需要满足超过minEdgeLengthM
+	///[TODO]:路口没删
+	//////////////////////////////////////////////////////////////////////////
+
+	int victimNodeId;
+	int count = 0;
+	while (1)
+	{
+		if (count >= delNum)
+			break;
+		if (nodes[victimNodeId = int(((double)rand()) / RAND_MAX * (nodes.size() - 1))] == NULL)
+			continue;
+	
+		//遍历所有出度
+		AdjNode* currentAdjNode = adjList[victimNodeId]->next;
+		int connectCount = 0;
+		while (currentAdjNode != NULL)
+		{
+			connectCount++;
+			currentAdjNode = currentAdjNode->next;
+		}
+		if (connectCount < 4) //不是十字路口
+			continue;
+		
+		//检测所有连接的路长度都要足够长
+		currentAdjNode = adjList[victimNodeId]->next;
+		bool satisfyTheLengthThres = true;
+		while (currentAdjNode != NULL)
+		{
+			if (edges[currentAdjNode->edgeId]->lengthM < minEdgeLengthM)
+			{
+				satisfyTheLengthThres = false;
+				break;
+			}
+			currentAdjNode = currentAdjNode->next;
+		}
+		if (!satisfyTheLengthThres)
+			continue;
+		
+		//删路
+		currentAdjNode = adjList[victimNodeId]->next;
+		while (currentAdjNode != NULL)
+		{
+			int victimEdgeId = currentAdjNode->edgeId;
+			deletedEdges.push_back(edges[victimEdgeId]);
+			edges[victimEdgeId]->visited = true; //
+			cout << "delete " << victimEdgeId << endl;
+			int reverseVictimId = hasEdge(edges[victimEdgeId]->endNodeId, edges[victimEdgeId]->startNodeId);
+			if (reverseVictimId != -1)
+			{
+				deletedEdges.push_back(edges[reverseVictimId]);
+				edges[reverseVictimId]->visited = true; //
+				cout << "delete reverse " << reverseVictimId << endl;
+			}
+			delEdge(victimEdgeId);
+			currentAdjNode = currentAdjNode->next;
+		}
+		count++;	
+	}
+	cout << ">> randomly deleted " << count << " edges" << endl;
+	if (doOutput)
+	{
+		ofstream ofs("deletedEdgesType2.txt");
+		if (!ofs)
+		{
+			cout << "open deletedEdgesType2.txt error" << endl;
+		}
+		cout << deletedEdges.size() << endl;
+		for (int i = 0; i < deletedEdges.size(); i++)
+		{
+			//printf("%d: %d\n", i, deletedEdges[i]->id);
+			//cout << this->deletedEdges.size() << endl;
+			ofs << deletedEdges[i]->id << endl;
+		}
+		ofs.close();
+	}
+}
+
+void Map::deleteIntersectionType3(int delNum, double minEdgeLengthM, bool doOutput /* = true */)
+{
+	//////////////////////////////////////////////////////////////////////////
+	///删除类型3的路：即丁字路口包含的3条路（双向为6条），共要删除delNum个路口
+	///其中删除路的长度需要满足超过minEdgeLengthM
+	///[TODO]:路口没删
+	//////////////////////////////////////////////////////////////////////////
+
+	int victimNodeId;
+	int count = 0;
+	while (1)
+	{
+		if (count >= delNum)
+			break;
+		if (nodes[victimNodeId = int(((double)rand()) / RAND_MAX * (nodes.size() - 1))] == NULL)
+			continue;
+
+		//遍历所有出度
+		AdjNode* currentAdjNode = adjList[victimNodeId]->next;
+		int connectCount = 0;
+		while (currentAdjNode != NULL)
+		{
+			connectCount++;
+			currentAdjNode = currentAdjNode->next;
+		}
+		if (connectCount != 3) //不是丁字路口
+			continue;
+
+		//检测所有连接的路长度都要足够长
+		currentAdjNode = adjList[victimNodeId]->next;
+		bool satisfyTheLengthThres = true;
+		while (currentAdjNode != NULL)
+		{
+			if (edges[currentAdjNode->edgeId]->lengthM < minEdgeLengthM)
+			{
+				satisfyTheLengthThres = false;
+				break;
+			}
+			currentAdjNode = currentAdjNode->next;
+		}
+		if (!satisfyTheLengthThres)
+			continue;
+
+		//检测每条候选路段是不是周围比较空旷
+		currentAdjNode = adjList[victimNodeId]->next;
+		bool satisfyTheSparse = true;
+		while (currentAdjNode != NULL)
+		{
+			vector<Edge*> nearEdges;
+			getNearEdges(edges[currentAdjNode->edgeId], 150.0, nearEdges);
+			double minNearEdgeDistM = 99999.0;
+			bool hasNearedgeAlreayDeleted = false;
+			for each (Edge* nearEdge in nearEdges)
+			{
+				//cal mindist <nearEdge, victimEdge>
+				double dist = distM(edges[currentAdjNode->edgeId], nearEdge);
+				if (dist > eps && dist < minNearEdgeDistM)
+				{
+					minNearEdgeDistM = dist;
+				}
+				if (nearEdge->visited == true && dist <= eps)
+				{
+					hasNearedgeAlreayDeleted = true;
+					break;
+				}
+			}
+			if (hasNearedgeAlreayDeleted || minNearEdgeDistM < 150.0) //如果附近30m内有其他路则不考虑这个路口
+			{
+				satisfyTheSparse = false;
+				break;
+			}	
+			currentAdjNode = currentAdjNode->next;
+		}
+		if (!satisfyTheSparse)
+			continue;		
+
+		//删路
+		currentAdjNode = adjList[victimNodeId]->next;
+		while (currentAdjNode != NULL)
+		{
+			int victimEdgeId = currentAdjNode->edgeId;
+			deletedEdges.push_back(edges[victimEdgeId]);
+			edges[victimEdgeId]->visited = true; //
+			cout << "delete " << victimEdgeId << endl;
+			int reverseVictimId = hasEdge(edges[victimEdgeId]->endNodeId, edges[victimEdgeId]->startNodeId);
+			if (reverseVictimId != -1)
+			{
+				deletedEdges.push_back(edges[reverseVictimId]);
+				edges[reverseVictimId]->visited = true; //
+				cout << "delete reverse " << reverseVictimId << endl;
+			}
+			delEdge(victimEdgeId);
+			currentAdjNode = currentAdjNode->next;
+		}
+		count++;
+	}
+	cout << ">> randomly deleted " << count << " edges" << endl;
+	if (doOutput)
+	{
+		ofstream ofs("deletedEdgesType3.txt");
+		if (!ofs)
+		{
+			cout << "open deletedEdgesType3.txt error" << endl;
+		}
+		cout << deletedEdges.size() << endl;
+		for (int i = 0; i < deletedEdges.size(); i++)
+		{
+			//printf("%d: %d\n", i, deletedEdges[i]->id);
+			//cout << this->deletedEdges.size() << endl;
+			ofs << deletedEdges[i]->id << endl;
+		}
+		ofs.close();
+	}
 }
 
 void Map::deleteEdges(string path)
@@ -1068,14 +1435,14 @@ double Map::distM_withThres(double lat, double lon, Edge* edge, double threshold
 	while (nextIter != edge->figure->end())
 	{
 		//有投影
-		GeoPoint* pt = new GeoPoint(lat, lon);
-		if (cosAngle(pt, (*iter), (*nextIter)) <= 0 && cosAngle(pt, (*nextIter), (*iter)) <= 0)
+		GeoPoint pt(lat, lon);
+		if (cosAngle(&pt, (*iter), (*nextIter)) <= 0 && cosAngle(&pt, (*nextIter), (*iter)) <= 0)
 		{
 			double A = ((*nextIter)->lat - (*iter)->lat);
 			double B = -((*nextIter)->lon - (*iter)->lon);
 			double C = (*iter)->lat * ((*nextIter)->lon - (*iter)->lon)
 				- (*iter)->lon * ((*nextIter)->lat - (*iter)->lat);
-			double tmpDist = abs(A * pt->lon + B * pt->lat + C) / sqrt(A * A + B * B);
+			double tmpDist = abs(A * pt.lon + B * pt.lat + C) / sqrt(A * A + B * B);
 			tmpDist *= GeoPoint::geoScale;
 			if (tmpDist < threshold)
 				return tmpDist;
@@ -1109,12 +1476,7 @@ double Map::calEdgeLength(Figure* figure) const
 
 bool Map::inArea(double lat, double lon) const
 {
-	return (lat > minLat && lat < maxLat && lon > minLon && lon < maxLon);
-}
-
-bool Map::inArea(int nodeId) const
-{
-	return (nodes[nodeId] != NULL);
+	return (lat > area->minLat && lat < area->maxLat && lon > area->minLon && lon < area->maxLon);
 }
 
 void Map::test()
@@ -1181,8 +1543,10 @@ void Map::createGridIndex()
 	///对全图建立网格索引
 	//////////////////////////////////////////////////////////////////////////
 	//initialization
-	gridHeight = int((maxLat - minLat) / (maxLon - minLon) * double(gridWidth)) + 1;
-	gridSizeDeg = (maxLon - minLon) / double(gridWidth);
+	if (gridWidth <= 0)
+		return;	
+	gridHeight = int((area->maxLat - area->minLat) / (area->maxLon - area->minLon) * double(gridWidth)) + 1;
+	gridSizeDeg = (area->maxLon - area->minLon) / double(gridWidth);
 	grid = new list<Edge*>* *[gridHeight];
 	for (int i = 0; i < gridHeight; i++)
 		grid[i] = new list<Edge*>* [gridWidth];
@@ -1230,15 +1594,15 @@ void Map::createGridIndexForSegment(Edge *edge, GeoPoint* fromPT, GeoPoint* toPt
 	//TODO:这样加索引并不准确
 	if (!inArea(fromPT->lat, fromPT->lon))
 	{
-		int row = (toPt->lat - minLat) / gridSizeDeg;
-		int col = (toPt->lon - minLon) / gridSizeDeg;
+		int row = (toPt->lat - area->minLat) / gridSizeDeg;
+		int col = (toPt->lon - area->minLon) / gridSizeDeg;
 		insertEdgeIntoGrid(edge, row, col);
 		return;
 	}
 	if (!inArea(toPt->lat, toPt->lon))
 	{
-		int row = (fromPT->lat - minLat) / gridSizeDeg;
-		int col = (fromPT->lon - minLon) / gridSizeDeg;
+		int row = (fromPT->lat - area->minLat) / gridSizeDeg;
+		int col = (fromPT->lon - area->minLon) / gridSizeDeg;
 		insertEdgeIntoGrid(edge, row, col);
 		return;
 	}
@@ -1247,10 +1611,10 @@ void Map::createGridIndexForSegment(Edge *edge, GeoPoint* fromPT, GeoPoint* toPt
 	bool crossRow;
 	GeoPoint* pt1 = fromPT;
 	GeoPoint* pt2 = toPt;
-	double x1 = pt1->lon - minLon;
-	double y1 = pt1->lat - minLat;
-	double x2 = pt2->lon - minLon;
-	double y2 = pt2->lat - minLat;
+	double x1 = pt1->lon - area->minLon;
+	double y1 = pt1->lat - area->minLat;
+	double x2 = pt2->lon - area->minLon;
+	double y2 = pt2->lat - area->minLat;
 	int row1 = y1 / gridSizeDeg;
 	int row2 = y2 / gridSizeDeg;
 	int col1 = x1 / gridSizeDeg;
@@ -1263,7 +1627,7 @@ void Map::createGridIndexForSegment(Edge *edge, GeoPoint* fromPT, GeoPoint* toPt
 		cout << "row2 = " << row2 << " col2 = " << col2 << endl;
 		printf("pt1(%.8lf,%.8lf)\n", pt1->lat, pt1->lon);
 		printf("pt2(%.8lf,%.8lf)\n", pt2->lat, pt2->lon);
-		printf("min(%.8lf,%.8lf), max(%.8lf,%.8lf)\n", minLat, minLon, maxLat, maxLon);
+		printf("min(%.8lf,%.8lf), max(%.8lf,%.8lf)\n", area->minLat, area->minLon, area->maxLat, area->maxLon);
 		cout << "edgeId = " << edge->id << endl;
 		cout << "from node " << edge->startNodeId << " to node " << edge->endNodeId << endl;
 		cout << "inarea = " << inArea(pt2->lat, pt2->lon) << endl;
@@ -1349,10 +1713,10 @@ void Map::createGridIndexForSegment(Edge *edge, GeoPoint* fromPT, GeoPoint* toPt
 		leftPt = pt2;
 		rightPt = pt1;
 	}
-	double xL = leftPt->lon - minLon;
-	double xR = rightPt->lon - minLon;
-	double yL = leftPt->lat - minLat;
-	double yR = rightPt->lat - minLat;
+	double xL = leftPt->lon - area->minLon;
+	double xR = rightPt->lon - area->minLon;
+	double yL = leftPt->lat - area->minLat;
+	double yR = rightPt->lat - area->minLat;
 	
 	//头
 	double headDist = sqrt((xL - pts[0].first)*(xL - pts[0].first) + (yL - pts[0].second)*(yL - pts[0].second));
@@ -1404,7 +1768,7 @@ void Map::insertEdge(int edgeId, int startNodeId, int endNodeId)
 {
 	//////////////////////////////////////////////////////////////////////////
 	///向邻接表adjList中插入一条边的连通关系，初次构建图时使用，私有版本，不允许外部调用
-	///TODO: 可能会有问题@Line1047的while
+	///[TODO]:可能会有问题@Line1487的while
 	//////////////////////////////////////////////////////////////////////////
 	/*if (startNodeId == -1)
 	{
@@ -1416,6 +1780,18 @@ void Map::insertEdge(int edgeId, int startNodeId, int endNodeId)
 		cout << " adjList: " << adjList.size() << endl;
 	}*/
 	AdjNode* current = adjList[startNodeId];
+	
+	if (current == NULL)
+	{
+		cout << "[异常] current = NULL！" << endl;
+		system("pause");
+	}
+	if (startNodeId >= adjList.size())
+	{
+		cout << "[异常] 索引越界 in Map::insertEdge(int edgeId, int startNodeId, int endNodeId)" << endl;
+		system("pause");
+	}
+	
 	
 	while (current->next != NULL)
 	{
@@ -1432,12 +1808,12 @@ void Map::insertEdge(int edgeId, int startNodeId, int endNodeId)
 
 int Map::getRowId(double lat) const
 {
-	return (int)((lat - minLat) / gridSizeDeg);
+	return (int)((lat - area->minLat) / gridSizeDeg);
 }
 
 int Map::getColId(double lon) const
 {
-	return (int)((lon - minLon) / gridSizeDeg);
+	return (int)((lon - area->minLon) / gridSizeDeg);
 }
 
 double Map::cosAngle(GeoPoint* pt1, GeoPoint* pt2, GeoPoint* pt3) const
@@ -1496,7 +1872,7 @@ void Map::split(const string& src, const char& separator, vector<string>& dest)
 	
 }
 
-double Map::distM(Edge* edge1, Edge* edge2, double thresholdM)
+double Map::distM(Edge* edge1, Edge* edge2, double thresholdM /* = 0 */)
 {
 	//////////////////////////////////////////////////////////////////////////
 	///返回两条路段的最短距离(一条路段上的点到另一条路段的最短距离),返回单位为米
@@ -1539,8 +1915,8 @@ void Map::getNearEdges(Edge* edge, double thresholdM, vector<Edge*>& dest)
 	int minRow = INFINITE, maxRow = -1, minCol = INFINITE, maxCol = -1;
 	for each (GeoPoint* pt in *(edge->figure))
 	{
-		int row = (pt->lat - minLat) / gridSizeDeg;
-		int col = (pt->lon - minLon) / gridSizeDeg;
+		int row = (pt->lat - area->minLat) / gridSizeDeg;
+		int col = (pt->lon - area->minLon) / gridSizeDeg;
 		if (row < minRow) minRow = row;
 		if (row > maxRow) maxRow = row;
 		if (col < minCol) minCol = col;

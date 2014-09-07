@@ -21,6 +21,7 @@ public:
 	vector<string> inputFileNames;
 	string outputFolder = "D:\\trajectory\\singapore_data\\experiments\\big area\\";
 	string newMMTrajsFileName = "newMMTrajs.txt";
+	string newMMTrajsFileName_unmatched = "newMMTrajs_unmatched.txt";
 	ofstream newMMTrajsFile;
 
 	list<Traj*> rawTrajs;
@@ -38,11 +39,12 @@ public:
 
 	void setArea(Area* area);
 	//void dumpToFile(list<GeoPoint*>& source, string filename);
-
+	
 	
 
 private:
 	void genExpData(string rawTrajFilePath);
+	void extractUnmatchedTrajs();
 	void readRawTrajs(string rawTrajFilePath);
 	void doSplit();
 	void doMM(Map* roadNetwork, list<Traj*>& trajs, double thresM = 50.0);

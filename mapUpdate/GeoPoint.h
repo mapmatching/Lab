@@ -1,9 +1,9 @@
 /* 
- * Last Updated at [2014/7/24 11:38] by wuhao
+ * Last Updated at [2014/9/4 20:23] by wuhao
  */
 #pragma once
 #include <iostream>
-#define INVALID_TIME -1
+#define INVALID_TIME -999
 
 class GeoPoint
 {

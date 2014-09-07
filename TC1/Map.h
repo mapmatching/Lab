@@ -1,5 +1,5 @@
 /* 
- * Last Updated at [2014/5/26 11:25] by wuhao
+ * Last Updated at [2014/9/4 19:58] by wuhao
  */
 #pragma once
 #include "GeoPoint.h"
@@ -19,6 +19,8 @@ using namespace std;
 #define max(a,b)	(((a) > (b)) ? (a) : (b))
 typedef list<GeoPoint*> Figure; //代表一条路形，每个GeoPoint*代表路形点，首尾节点即路的两个端点
 typedef std::pair<double, double> simplePoint; //内部类型，勿改动
+using namespace std;
+
 
 struct  Edge 
 {
@@ -26,8 +28,9 @@ struct  Edge
 	double lengthM;  //记录路段总长，单位为m
 	int startNodeId; //路段起始点id
 	int endNodeId;  //路段终止点id
-	bool visited;  //辅助字段，外部调用勿改动
+	bool visited;  //辅助字段，外部调用需谨慎改动（如果不知道这个有什么作用的话请不要改动这个域的值）,为了在范围查询时候防止重复返回而设立的字段
 	int id;
+	bool visitedExtern; //给外部调用的字段，来记录这个edge是否被访问
 };
 
 struct AdjNode //邻接表结点
@@ -60,10 +63,11 @@ public:
 	vector<GeoPoint*> nodes; //保存所有点的集合,如果点不在范围内则为NULL，【逐个遍历需手动判断NULL】
 	vector<AdjNode*> adjList; //邻接表
 	
-	void setArea(MapDrawer& md); //将区域与md的区域保持一致,需在open之前或有参构造函数前调用
+	void setArea(Area* area);
 	Map(); //默认构造函数,需要手动调用open()函数来初始化
-	Map(string folderDir, int gridWidth);  //在folderDir路径下载入地图文件,并以gridWidth列的粒度来创建索引
-	void open(string folderDir, int gridWidth);  //在folderDir路径下载入地图文件,并以gridWidth列的粒度来创建索引,适用于无参构造函数	
+	Map(string folderDir, Area* area, int gridWidth = 0);  //在folderDir路径下载入地图文件,并以gridWidth列的粒度来创建索引,gridWidth<=0时为不建立索引
+	void open(string folderDir, int gridWidth = 0);  //在folderDir路径下载入地图文件,并以gridWidth列的粒度来创建索引,适用于无参构造函数	
+	void openOld(string folderDir, int gridWidth = 0); //在folderDir路径下载入「老版格式」地图文件,并以gridWidth列的粒度来创建索引,适用于无参构造函数	
 
 
 	/*基础功能函数*/
@@ -74,6 +78,7 @@ public:
 	void getMinMaxLatLon(string nodeFilePath);
 	void drawMap(Gdiplus::Color color, MapDrawer& md); //画出地图
 	double distM(double lat, double lon, Edge* edge) const; //返回(lat,lon)点到edge的距离，单位为米
+	void getNearNodes(double lat, double lon, int k, vector<GeoPoint*>& dest); //返回距离(lat, lon)最近的k个node，存入dest
 
 	/*Map Matching相关函数*/
 	vector<Edge*> getNearEdges(double lat, double lon, double threshold) const; //返回距离(lat, lon)点严格小于threshold米的所有Edge*,会产生内存泄露
@@ -95,19 +100,22 @@ public:
 	void deleteEdgesRandomlyEx(int delNum, double minEdgeLengthM, double aroundThresholdM, int aroundNumThreshold, bool doOutput = true);
 	void deleteEdges(string path); //对于deleteEdgesRandomlyEx输出的所有删除的id号的文件读入后在路网中删除，保证调用此函数后的状态与调用deleteEdgesRandomlyEx()后的状态一样
 	vector<Edge*> deletedEdges; //记录被删除掉的边
+	void deleteIntersectionType1(int delNum, double minEdgeLengthM, bool doOutput = true);
+	void deleteIntersectionType2(int delNum, double minEdgeLengthM, bool doOutput = true);
+	void deleteIntersectionType3(int delNum, double minEdgeLengthM, bool doOutput = true);
 
 private:
 	int gridWidth, gridHeight;
 	double gridSizeDeg;
 	double strictThreshold = 0;
 	list<Edge*>* **grid;
-
-	//C++11标准，低版本不要这么写
+	Area* area;
+	//一些常用的area参考值
 	//singapore half
-	double minLat = 1.22;
+	/*double minLat = 1.22;
 	double maxLat = 1.5;
 	double minLon = 103.620;
-	double maxLon = 104.0;
+	double maxLon = 104.0;*/
 	
 	/*singapore full
 	double minLat = 0.99999;
@@ -127,7 +135,6 @@ private:
 	double distM_withThres(double lat, double lon, Edge* edge, double threshold) const; //返回(lat,lon)点到edge的距离上界,提前预判优化版本	
 	double calEdgeLength(Figure* figure) const;
 	bool inArea(double lat, double lon) const;
-	bool inArea(int nodeId) const;
 	void createGridIndex();
 	void createGridIndexForEdge(Edge *edge);
 	void createGridIndexForSegment(Edge *edge, GeoPoint* fromPT, GeoPoint* toPt);
@@ -139,7 +146,7 @@ private:
 	double cosAngle(GeoPoint* pt1, GeoPoint* pt2, GeoPoint* pt3) const;
 	void test();
 	void findNearEdges(Edge* edge, list<Edge*>& dest, double thresholdM); //返回距离edge长度不超过thresholdM的路段
-	double distM(Edge* edge1, Edge* edge2, double threshold);
+	double distM(Edge* edge1, Edge* edge2, double threshold = 0);
 	void getNearEdges(Edge* edge, double thresholdM, vector<Edge*>& dest);
 };
 

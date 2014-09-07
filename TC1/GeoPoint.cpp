@@ -1,5 +1,5 @@
 /* 
- * Last Updated at [2014/2/10 11:20] by wuhao
+ * Last Updated at [2014/9/4 20:23] by wuhao
  */
 #include "GeoPoint.h"
 #include <math.h>
@@ -103,4 +103,9 @@ double GeoPoint::distDeg(GeoPoint& pt)
 double GeoPoint::distDeg(GeoPoint* pt)
 {
 	return distDeg(this->lat, this->lon, pt->lat, pt->lon);
+}
+
+void GeoPoint::print()
+{
+	printf("(%.8lf, %.8lf)\n", this->lat, this->lon);
 }

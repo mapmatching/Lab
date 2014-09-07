@@ -1,5 +1,5 @@
 /* 
- * Last Updated at [2014/6/26 11:32] by wuhao
+ * Last Updated at [2014/9/4 19:58] by wuhao
  */
 #pragma once
 #include "GeoPoint.h"

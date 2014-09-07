@@ -1,5 +1,5 @@
 /* 
- * Last Updated at [2014/4/23 10:39] by wuhao
+ * Last Updated at [2014/6/26 11:31] by wuhao
  */
 #include "MapDrawer.h"
 
@@ -9,11 +9,8 @@ MapDrawer::MapDrawer()
 	//GDI+ initializaton
 	Gdiplus::GdiplusStartupInput gdiplusStartupInput;
 	Gdiplus::GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
-
-	minLat = 0;
-	maxLat = 0;
-	minLon = 0;
-	maxLon = 0;
+	
+	area = NULL;
 	r_width = 0;
 	r_height = 0;
 }
@@ -31,30 +28,28 @@ MapDrawer::~MapDrawer()
 //////////////////////////////////////////////////////////////////////////
 void MapDrawer::setArea(double _minLat, double _maxLat, double _minLon, double _maxLon)
 {
-	minLat = _minLat;
-	maxLat = _maxLat;
-	minLon = _minLon;
-	maxLon = _maxLon;
+	if (area == NULL)
+		area = new Area(_minLat, _maxLat, _minLon, _maxLon);
+	else
+		area->setArea(_minLat, _maxLat, _minLon, _maxLon);
 }
 
-/*void MapDrawer::setArea(Map& map)
+void MapDrawer::setArea(Area* area)
 {
-	minLat = map.minLat;
-	minLon = map.minLon;
-	maxLat = map.maxLat;
-	maxLon = map.maxLon;
-}*/
+	//[ATTENTION][MEMORY_LEAK]这里并没有将原area的内存给回收，可能会造成内存泄露
+	this->area = area;
+}
 
 void MapDrawer::setResolution(int width)
 {
-	if (minLat == 0 && maxLat == 0 && maxLat == 0 && maxLon == 0)
+	if (area->minLat == 0 && area->maxLat == 0 && area->maxLat == 0 && area->maxLon == 0)
 	{
 		printf("You should set the area first!\n");
 		system("pause");
 		exit(0);
 	}
 	r_width = width;
-	double height = (maxLat - minLat) / (maxLon - minLon) * width;
+	double height = (area->maxLat - area->minLat) / (area->maxLon - area->minLon) * width;
 	r_height = (int)height;
 }
 
@@ -185,6 +180,19 @@ void MapDrawer::drawLine(Gdiplus::Color color, double lat1, double lon1, double 
 	drawLine(color, pt1.X, pt1.Y, pt2.X, pt2.Y);
 }
 
+void MapDrawer::drawBoldLine(Gdiplus::Color color, int x1, int y1, int x2, int y2)
+{
+	if (!inArea(x1, y1) && !inArea(x2, y2))
+	{
+		return;
+	}
+	drawLine(color, x1, y1, x2, y2);
+	drawLine(color, x1+1, y1, x2+1, y2);
+	drawLine(color, x1-1, y1, x2-1, y2);
+	drawLine(color, x1, y1+1, x2, y2+1);
+	drawLine(color, x1, y1-1, x2, y2-1);
+}
+
 void MapDrawer::drawBoldLine(Gdiplus::Color color, double lat1, double lon1, double lat2, double lon2)
 {
 	if (!inArea(lat1, lon1) && !inArea(lat2, lon2))
@@ -213,41 +221,44 @@ void MapDrawer::drawBoldLine(Gdiplus::Color color, double lat1, double lon1, dou
 	drawLine(color, pt5.X, pt5.Y, pt6.X, pt6.Y);
 }
 
-Gdiplus::Color randomColor();
+//Gdiplus::Color randomColor();
 
 void MapDrawer::drawMap(Gdiplus::Color color, std::string mapFilePath)
 {
 	/************************************************************************/
 	/* OpenStreetMap格式说明
-	/* WA_EdgeGeometry文件
-	/* id^^Highway^1^起始端点纬度^起始端点经度[^中间点1纬度^中间点1经度^中间点2纬度^中间点2经度.....]^结束端点纬度^结束端点经度*/
+	/* nodesOSM.txt: nodeId \t lat \t lon \n
+	/* edgeOSM.txt: edgeId \t startNodeId \t endNodeId \t figureNodeCount \t figure1Lat \t figure1Lon \t ... figureNLat \t figureNLon \n
 	/************************************************************************/
 
 	std::ifstream ifs(mapFilePath);
 	if (!ifs)
 	{
 		std::cout << "open " + mapFilePath + " error!\n" ;
+		system("pause");
 		return;
 	}
-	std::string strLine;
-	while (getline(ifs, strLine))
+	while (ifs)
 	{
-		std::vector<std::string> substrs;
-		split(strLine, "^", substrs);
-		double lat1, lon1, lat2, lon2;
-		lat2 = atof(substrs[3].c_str());
-		lon2 = atof(substrs[4].c_str());
-		Gdiplus::Color color_ = randomColor();
-		for (int i = 3; i < substrs.size() - 3; i+=2)
+		int dummy, figureCount;
+		ifs >> dummy >> dummy >> dummy >> figureCount;
+		if (ifs.fail())
+			break;
+		double preLat, preLon, currentLat, currentLon;
+		for (int i = 0; i < figureCount; i++)
 		{
-			lat1 = lat2;
-			lon1 = lon2;
-			lat2 = atof(substrs[i + 2].c_str());
-			lon2 = atof(substrs[i + 3].c_str());
-			drawLine(color, lat1, lon1, lat2, lon2);
-			drawBigPoint(Gdiplus::Color::Black, lat1, lon1);
-			drawBigPoint(Gdiplus::Color::Black, lat2, lon2);
+			if (i == 0)
+			{
+				ifs >> preLat >> preLon;
+				continue;
+			}
+			ifs >> currentLat >> currentLon;
+			drawLine(color, preLat, preLon, currentLat, currentLon);
+			drawBigPoint(Gdiplus::Color::Black, preLat, preLon);
+			preLat = currentLat;
+			preLon = currentLon;
 		}
+		drawBigPoint(Gdiplus::Color::Black, preLat, preLon);		
 	}
 	ifs.close();
 }
@@ -262,7 +273,7 @@ void MapDrawer::saveBitmap(std::string fileName)
 
 bool MapDrawer::inArea(double lat, double lon)
 {
-	return (lat > minLat && lat < maxLat && lon > minLon && lon < maxLon);
+	return (lat > area->minLat && lat < area->maxLat && lon > area->minLon && lon < area->maxLon);
 }
 
 bool MapDrawer::inArea(int x, int y)
@@ -273,33 +284,33 @@ bool MapDrawer::inArea(int x, int y)
 //北半球
 void MapDrawer::zoomIn(int upperLeft_x, int upperLeft_y, int width, int height, int newR_width)
 {
-	double scaleY = (maxLat - minLat) / r_height;
-	double scaleX = (maxLon - minLon) / r_width;
+	double scaleY = (area->maxLat - area->minLat) / r_height;
+	double scaleX = (area->maxLon - area->minLon) / r_width;
 	double newMinLat, newMaxLat, newMinLon, newMaxLon;
-	newMaxLat = maxLat - upperLeft_y * scaleY;
+	newMaxLat = area->maxLat - upperLeft_y * scaleY;
 	newMinLat = newMaxLat - height * scaleY;
-	newMinLon = minLon + upperLeft_x * scaleX;
+	newMinLon = area->minLon + upperLeft_x * scaleX;
 	newMaxLon = newMinLon + width * scaleX;
-	minLat = newMinLat;
-	maxLat = newMaxLat;
-	minLon = newMinLon;
-	maxLon = newMaxLon;
+	area->minLat = newMinLat;
+	area->maxLat = newMaxLat;
+	area->minLon = newMinLon;
+	area->maxLon = newMaxLon;
 	setResolution(newR_width);
 }
 
 Gdiplus::Point MapDrawer::geoToScreen(double lat, double lon)
 {
-	int x = (lon - minLon) / ((maxLon - minLon)  / (double)r_width);
-	int y = (maxLat -lat) / ((maxLat - minLat) / (double)r_height); //屏幕Y轴是向下递增的
+	int x = (lon - area->minLon) / ((area->maxLon - area->minLon) / (double)r_width);
+	int y = (area->maxLat - lat) / ((area->maxLat - area->minLat) / (double)r_height); //屏幕Y轴是向下递增的
 	Gdiplus::Point pt(x, y);
 	return pt;
 }
 
 std::pair<double, double> MapDrawer::screenToGeo(int screenX, int screenY)
 {
-	double scale = r_width / (maxLon - minLon);
-	double lat = maxLat - (double)screenY / (double)r_height * (maxLat - minLat);
-	double lon = (double)screenX / (double)r_width * (maxLon - minLon) + minLon;
+	double scale = r_width / (area->maxLon - area->minLon);
+	double lat = area->maxLat - (double)screenY / (double)r_height * (area->maxLat - area->minLat);
+	double lon = (double)screenX / (double)r_width * (area->maxLon - area->minLon) + area->minLon;
 	return std::make_pair(lat, lon);
 }
 
@@ -422,25 +433,4 @@ wchar_t* MapDrawer::CharToWchar(const char* c)
 	MultiByteToWideChar(CP_ACP, 0, c, strlen(c), m_wchar, len);
 	m_wchar[len] = '\0';
 	return m_wchar;
-}
-
-void MapDrawer::split(const std::string& src, const std::string& separator, std::vector<std::string>& dest)
-{
-	std::string str = src;
-	std::string substring;
-	std::string::size_type start = 0, index;
-	do
-	{
-		index = str.find_first_of(separator, start);
-		if (index != std::string::npos)
-		{
-			substring = str.substr(start, index - start);
-			dest.push_back(substring);
-			start = str.find_first_not_of(separator, index);
-			if (start == std::string::npos) return;
-		}
-	} while (index != std::string::npos);
-	//the last token
-	substring = str.substr(start);
-	dest.push_back(substring);
 }

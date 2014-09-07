@@ -1857,6 +1857,9 @@ void expTest()
 	eg.inputFileNames.push_back("logs_20120218_20120219.txt");
 	eg.setArea(&area);
 
+	//eg.extractUnmatchedTrajs();
+	system("pause");
+	exit(0);
 	//eg.genExpData();
 	//system("pause");
 	//exit(0);
@@ -1864,7 +1867,7 @@ void expTest()
 	/*test code starts from here*/
 	TrajReader tr("D:\\trajectory\\singapore_data\\experiments\\big area\\newMMTrajs.txt");
 	list<Traj*> trajs;
-	tr.readTrajs(trajs);
+	tr.readTrajs(trajs,50000);
 	/*test code ends*/
 	/**********************************************************/
 
@@ -1875,9 +1878,9 @@ void expTest()
 	md.newBitmap();
 	md.lockBits();
 
-	roadNetwork.drawMap(Color::Black, md);
-	roadNetwork.drawDeletedEdges(Gdiplus::Color::Red, md);
-	TrajDrawer::drawMMTrajs(trajs, md, Color::Red, false, false, false, true);
+	//roadNetwork.drawMap(Color::Black, md);
+	//roadNetwork.drawDeletedEdges(Gdiplus::Color::Red, md);
+	TrajDrawer::drawMMTrajs(trajs, md, Color::Red, false, true, false, true);
 	md.unlockBits();
 	md.saveBitmap("expTest.png");
 	system("pause");
@@ -1923,7 +1926,7 @@ void main()
 	
 	/**********************************************************/
 	/*test code starts from here*/
-	//expTest();
+	expTest();
 	/*test code ends*/
 	/**********************************************************/
 	

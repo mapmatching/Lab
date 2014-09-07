@@ -2,11 +2,14 @@
 
 void ExpGenerator::genExpData()
 {
+	//输出所有经过两次匹配后的轨迹
 	for (int i = 0; i < inputFileNames.size(); i++)
 	{
 		cout << ">> 处理文件 " << inputFileNames[i] << endl;
 		genExpData(inputFolder + inputFileNames[i]);
 	}
+	//输出两次匹配后失败的轨迹
+	extractUnmatchedTrajs();
 }
 
 void ExpGenerator::genExpData(string rawTrajFilePath)
@@ -35,6 +38,48 @@ void ExpGenerator::genExpData(string rawTrajFilePath)
 	outputNewTrajs(trajsInArea); 
 	deleteList(trajsInArea);
 	//dumpTo(trajsInArea, doneTrajs);
+}
+
+void ExpGenerator::extractUnmatchedTrajs()
+{
+	//////////////////////////////////////////////////////////////////////////
+	///将生成的实验数据提取出匹配失败的轨迹
+	///注意：提取出来的轨迹会存在长度为1的情况
+	//////////////////////////////////////////////////////////////////////////
+	TrajReader tReader(outputFolder + newMMTrajsFileName);
+	list<Traj*> trajs;
+	tReader.readTrajs(trajs);//, 10000);
+	ofstream ofs(outputFolder + newMMTrajsFileName_unmatched);
+	ofs << fixed << showpoint << setprecision(8);
+	bool lastOutputIsNegative1 = false;
+	cout << trajs.size() << endl;
+	for each(Traj* traj in trajs)
+	{
+		for each (GeoPoint* pt in *traj)
+		{
+			if (pt->mmRoadId == -1) //留下那些第一次匹配就失败的点
+			{
+			//system("pause");
+				ofs << pt->time << " " << pt->lat << " " << pt->lon << " " << -1 << endl;
+				lastOutputIsNegative1 = false;
+			}
+			else
+			{
+				if (!lastOutputIsNegative1)
+				{
+					ofs << -1 << endl;
+					lastOutputIsNegative1 = true;
+				}
+			}
+		}
+
+		if (!lastOutputIsNegative1)
+		{
+			ofs << -1 << endl;
+			lastOutputIsNegative1 = true;
+		}
+	}
+	ofs.close();
 }
 
 void ExpGenerator::setArea(Area* area)

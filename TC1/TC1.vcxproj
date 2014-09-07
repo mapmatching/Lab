@@ -161,6 +161,7 @@
     <ClCompile Include="polylineGenerator.cpp" />
     <ClCompile Include="TC1.cpp" />
     <ClCompile Include="GeoPoint.cpp" />
+    <ClCompile Include="TrajReader.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

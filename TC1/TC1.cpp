@@ -22,14 +22,8 @@
 #define INFINITE 999999999
 using namespace std;
 
-double minLat = 1.22;
-double maxLat = 1.5;
-double minLon = 103.620;
-double maxLon = 104.0;
-//double minLat = 0.99999;
-//double maxLat = 1.6265;
-//double minLon = 103.548;
-//double maxLon = 104.1155;
+//Area area(1.294788, 1.327723, 103.784667, 103.825200); //small
+Area area(1.294788, 1.393593, 103.784667, 103.906266); //big
 int size = 15000;
 //some switches
 bool zoomed = true;
@@ -942,8 +936,8 @@ void createGridIndex(void(*pInsertFunc)(IndexedTraj*))
 	//////////////////////////////////////////////////////////////////////////
 	cout << ">> start creating grid index" << endl;
 	//initialization
-	gridHeight = int((maxLat - minLat) / (maxLon - minLon) * double(gridWidth)) + 1;
-	gridSizeDeg = (maxLon - minLon) / double(gridWidth);
+	gridHeight = int((area.maxLat - area.minLat) / (area.maxLon - area.minLon) * double(gridWidth)) + 1;
+	gridSizeDeg = (area.maxLon - area.minLon) / double(gridWidth);
 	grid = new list<IndexedTraj*>*[gridHeight];
 	
 	for (int i = 0; i < gridHeight; i++)
@@ -977,8 +971,8 @@ void createGridIndexForOneTraj_Lite(IndexedTraj* iTraj)
 	Traj* traj = iTraj->traj;
 	for (Traj::iterator iter = traj->begin(); iter != traj->end(); iter++)
 	{
-		int row = ((*iter)->lat - minLat) / gridSizeDeg;
-		int col = ((*iter)->lon - minLon) / gridSizeDeg;
+		int row = ((*iter)->lat - area.minLat) / gridSizeDeg;
+		int col = ((*iter)->lon - area.minLon) / gridSizeDeg;
 		if (row >= gridHeight || row < 0 || col >= gridWidth || col < 0)
 		{
 			printf("pt(%lf, %lf), row = %d, col = %d\n", (*iter)->lat, (*iter)->lon, row, col);
@@ -1017,10 +1011,10 @@ void createGridIndexForSegment(IndexedTraj *iTraj, GeoPoint* fromPT, GeoPoint* t
 	bool strictThreshold = 0.1;
 	GeoPoint* pt1 = fromPT;
 	GeoPoint* pt2 = toPt;
-	double x1 = pt1->lon - minLon;
-	double y1 = pt1->lat - minLat;
-	double x2 = pt2->lon - minLon;
-	double y2 = pt2->lat - minLat;
+	double x1 = pt1->lon - area.minLon;
+	double y1 = pt1->lat - area.minLat;
+	double x2 = pt2->lon - area.minLon;
+	double y2 = pt2->lat - area.minLat;
 	int row1 = y1 / gridSizeDeg;
 	int row2 = y2 / gridSizeDeg;
 	int col1 = x1 / gridSizeDeg;
@@ -1094,10 +1088,10 @@ void createGridIndexForSegment(IndexedTraj *iTraj, GeoPoint* fromPT, GeoPoint* t
 		leftPt = pt2;
 		rightPt = pt1;
 	}
-	double xL = leftPt->lon - minLon;
-	double xR = rightPt->lon - minLon;
-	double yL = leftPt->lat - minLat;
-	double yR = rightPt->lat - minLat;
+	double xL = leftPt->lon - area.minLon;
+	double xR = rightPt->lon - area.minLon;
+	double yL = leftPt->lat - area.minLat;
+	double yR = rightPt->lat - area.minLat;
 
 	//头
 	double headDist = sqrt((xL - pts[0].first)*(xL - pts[0].first) + (yL - pts[0].second)*(yL - pts[0].second));
@@ -1184,13 +1178,13 @@ void drawGridLine(Gdiplus::Color color)
 	double delta = 0.0000001;
 	for (int i = 0; i < gridHeight; i++)
 	{
-		double lat = minLat + gridSizeDeg * i;
-		md.drawLine(color, lat, minLon + delta, lat, maxLon - delta);
+		double lat = area.minLat + gridSizeDeg * i;
+		md.drawLine(color, lat, area.minLon + delta, lat, area.maxLon - delta);
 	}
 	for (int i = 0; i < gridWidth; i++)
 	{
-		double lon = minLon + gridSizeDeg * i;
-		md.drawLine(color, minLat + delta, lon, maxLat - delta, lon);
+		double lon = area.minLon + gridSizeDeg * i;
+		md.drawLine(color, area.minLat + delta, lon, area.maxLat - delta, lon);
 	}
 }
 
@@ -1894,8 +1888,8 @@ void getNearTrajs(Traj* traj, double thresholdM, list<IndexedTraj*>& dest)
 	int minRow = INFINITE, maxRow = -1, minCol = INFINITE, maxCol = -1;
 	for each (GeoPoint* pt in *traj)
 	{
-		int row = (pt->lat - minLat) / gridSizeDeg;
-		int col = (pt->lon - minLon) / gridSizeDeg;
+		int row = (pt->lat - area.minLat) / gridSizeDeg;
+		int col = (pt->lon - area.minLon) / gridSizeDeg;
 		if (row < minRow) minRow = row;
 		if (row > maxRow) maxRow = row;
 		if (col < minCol) minCol = col;
@@ -2324,8 +2318,8 @@ void doCluster(vector<IndexedTraj*>& trajs)
 			int minRow = INFINITE, maxRow = -1, minCol = INFINITE, maxCol = -1;
 			for each (GeoPoint* pt in (*trajs[k]->traj))
 			{
-				int row = (pt->lat - minLat) / gridSizeDeg;
-				int col = (pt->lon - minLon) / gridSizeDeg;
+				int row = (pt->lat - area.minLat) / gridSizeDeg;
+				int col = (pt->lon - area.minLon) / gridSizeDeg;
 				if (row < minRow) minRow = row;
 				if (row > maxRow) maxRow = row;
 				if (col < minCol) minCol = col;
@@ -2530,6 +2524,7 @@ void core_v2()
 	}
 	roadNetwork.drawMap(Gdiplus::Color::Blue, md);
 	drawAllGennedEdges();
+	TrajReader::outputTrajs(gennedEgdes, "roads_wy.txt");
 	roadNetwork.drawMap(Gdiplus::Color::Blue, md);
 	//drawClusteredTrajs();
 }
@@ -3161,7 +3156,7 @@ void mFirstClust()
 }
 
 
-void myMain()
+void initialize()
 {
 
 }
@@ -3171,89 +3166,16 @@ void main()
 	int startTime = clock();
 	srand((unsigned)time(NULL));
 
-	//gen90sData();
-	//exit(0);
-	/**********************************************************/
-	/*test code starts from here*/
-/*	Matrix<double> mat(3, 3);
-	mat.at(0, 0) = 1;
-	mat.at(1, 1) = 2;
-	mat.at(2, 2) = 3;
-	Matrix<double> mat2(mat);
-	Matrix<double> mat3((mat*mat2)+mat);
-	mat3.print();
-	system("pause");
-	exit(0);*/
-	/*test code ends*/
-	/**********************************************************/
 	
-	
-/**********************************************************/
-/*test code starts from here*/
-	/*Map m;
-	m.open("D:\\trajectory\\singapore_data\\singapore_map\\", 500);
-	MapDrawer md;
-	md.setArea(m.minLat, m.maxLat, m.minLon, m.maxLon);
-	md.setResolution(15000);
-	md.newBitmap();
-	md.lockBits();
-	m.drawMap(Color::Blue, md);
-	md.unlockBits();
-	md.saveBitmap("singapore.png");
-	system("pause");
-	exit(0);*/
-	/*test code ends*/
-/**********************************************************/
-
 //=======================================initialization start========================================//
-	string mapFilePath = "D:\\trajectory\\singapore_data\\singapore_map\\WA_EdgeGeometry.txt";
-	//string trajDir = "D:\\trajectory\\singapore_data\\20110102_03\\";	
-	//string trajDir = "D:\\trajectory\\singapore_data\\20120101_06\\";
-	string trajDir = "D:\\trajectory\\singapore_data\\201202\\every day\\";
-	//trajDir = "D:\\trajectory\\singapore_data\\experiments\\90s\\";
-	vector<string> trajFolders;
-	string trajFileName;
-	//trajFolders.push_back(trajDir + "20110110_11\\");
-	//trajFolders.push_back(trajDir + "20110120_21\\");
-	md.setArea(minLat, maxLat, minLon, maxLon);
+	string trajPath = "D:\\trajectory\\singapore_data\\experiments\\big area\\newMMTrajs_unmatched.txt";
+	
+	md.setArea(&area);
 	md.setResolution(size);
-		
-	/**********************************************************/
-	/*test code starts from here*/
-	/*createGridIndex();
-	md.setArea(minLat, maxLat, minLon, maxLon);
-	md.setResolution(size);
-	md.newBitmap();
-	md.lockBits();
-	GeoPoint* pt = new GeoPoint(1.44570000, 103.77409000);
-
-	vector<Edge*> nearEdges = map.getNearEdges(pt->lat, pt->lon, 50);
-	printf("nearEdge count = %d", nearEdges.size());
-
-	md.drawMap(Gdiplus::Color::Gray, mapFilePath);
-	for (int i = 0; i < nearEdges.size(); i++)
-	{
-	drawOneTraj(Gdiplus::Color::Blue, nearEdges[i]->figure);
-	}
-	int songshen[] = { 7169, 7199, 7252, 7253, 7254, 7387, 7635, 7815, 8074, 8075, 8076, 8077, 8115, 8116, 8117, 8118,
-	8336, 8337, 8411, 8467, 8530, 8542, 8552, 8562, 35116, 35145, 35198, 35199, 35200, 35333, 35581, 35762, 36034,
-	36035, 36036, 36037, 36053, 36054, 36055, 36056, 36281, 36282, 36357, 36413, 36476, 36488, 36498, 36508 };
-	for (int i = 0; i < 48; i++)
-	{
-	drawOneTraj(randomColor(), map.edges[songshen[i]]->figure);
-	}
-	drawGridLine(Gdiplus::Color::Green);
-	md.drawBigPoint(Gdiplus::Color::Firebrick, pt->lat, pt->lon);
-	system("pause");
-	md.unlockBits();
-	md.saveBitmap("test.png");
-	system("pause");
-	exit(0);*/
-	/*test code ends*/
-	/**********************************************************/
 	
 	/*zooming part start*/
-	zoomed = true;
+	//以下代码已废弃，勿用
+	zoomed = false;
 	double zoomingRate;
 	if (zoomed)
 	{
@@ -3266,62 +3188,15 @@ void main()
 		size = 5000;
 		//md.zoomIn(8900, 7150, zoomWide, zoomHeight, size);
 		md.zoomIn(6500, 6800, zoomWide, zoomHeight, size);
-		printf("zoomed: minlat:%lf,maxlat:%lf,minlon:%lf,maxlon:%lf\nresolution:%d*%d\n", md.minLat, md.maxLat, md.minLon, md.maxLon, md.r_width, md.r_height);
-		minLat = md.minLat;
-		maxLat = md.maxLat;
-		minLon = md.minLon;
-		maxLon = md.maxLon;		
+		printf("zoomed: minlat:%lf,maxlat:%lf,minlon:%lf,maxlon:%lf\nresolution:%d*%d\n", md.area->minLat, md.area->maxLat, md.area->minLon, md.area->maxLon, md.r_width, md.r_height);
 	}
-	system("pause");
 	/*zooming part end*/
-	
-	/**********************************************************/
-	/*test code starts from here*/
-	/*Map m;
-	m.setArea(md);
-	m.open("D:\\trajectory\\singapore_data\\singapore_map\\", (int)(500.0 * 1600.0 / 15000.0));
-	md.newBitmap();
-	md.lockBits();
-	m.drawMap(Color::Blue, md);
-	md.unlockBits();
-	md.saveBitmap("singapore.png");
-	system("pause");
-	exit(0);*/
-	/*test code ends*/
-	/**********************************************************/
 
-	roadNetwork.setArea(md);
-	roadNetwork.open("D:\\trajectory\\singapore_data\\singapore_map\\", (int)(500.0 * zoomingRate));
-	//roadNetwork.deleteEdges("D:\\trajectory\\singapore_data\\experiments\\3\\deletedEdges.txt");
-	//roadNetwork.drawDeletedEdges(Color::)
+	roadNetwork.setArea(&area);
+	roadNetwork.openOld("D:\\trajectory\\singapore_data\\singapore_map\\", 50);
+	roadNetwork.deleteEdges("D:\\trajectory\\singapore_data\\experiments\\big area\\deletedEdges.txt");
 	printf("\n");
-	md.setResolution(1000);
-	md.newBitmap();
-	md.lockBits();
-	roadNetwork.drawMap(Gdiplus::Color::Black, md);
-	md.unlockBits();
-	md.saveBitmap("map demo.png");
-	exit(0);
 /*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑initialization end↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
-	//drawTCCResult();
-	
-	/**********************************************************/
-	/*test code starts from here*/
-	///test random edge deletion code
-	//roadNetwork.deleteEdgesRandomly(10, 200.0);
-	//roadNetwork.deleteEdgesRandomlyEx(10, 300, 50, 8);
-	/*roadNetwork.deleteEdges("D:\\trajectory\\singapore_data\\experiments\\3\\deletedEdges.txt");
-	md.setResolution(1000);
-	md.newBitmap();
-	md.lockBits();
-	roadNetwork.drawMap(Gdiplus::Color::Blue, md);
-	roadNetwork.drawDeletedEdges(Gdiplus::Color::Red, md);
-	md.unlockBits();
-	md.saveBitmap("edgeDeletion2.png");
-	system("pause");
-	exit(0);*/
-	/*test code ends*/
-	/**********************************************************/
 	
 	
 	/*一条龙*/
@@ -3334,9 +3209,7 @@ void main()
 		//limitTime = 100; //采样间隔大于60秒的prune掉
 		double minTrajDist = 50;
 		double extendDist = 25;
-		trajFileName = "wy_MMTrajs.txt";
-		//readStdTrajs(trajDir + trajFileName, tempTrajs);
-		TrajReader tReader(trajDir + trajFileName);
+		TrajReader tReader(trajPath);
 		tReader.readTrajs(tempTrajs);
 		list<Traj*> extendTrajs;
 		doExtend(tempTrajs, extendTrajs, extendDist, minTrajDist, true);
@@ -3346,7 +3219,7 @@ void main()
 		drawTrajs(Gdiplus::Color::Red, extendTrajs, true, false);
 		createGridIndex(createGridIndexForOneTraj);
 		drawGridLine(Gdiplus::Color::Green);
-		md.drawMap(Gdiplus::Color::Blue, mapFilePath);
+		//md.drawMap(Gdiplus::Color::Blue, mapFilePath);
 		md.unlockBits();
 		md.saveBitmap(trajDir + "testExtend.png");
 		system("pause");
@@ -3356,13 +3229,13 @@ void main()
 	/*画出十字路口点*/
 	if (0)
 	{
-		trajFileName = "splitedTrajs.txt";
-		readStdTrajs(trajDir + trajFileName, tempTrajs);
+		//trajFileName = "splitedTrajs.txt";
+		readStdTrajs(trajPath, tempTrajs);
 		cout << "tempTrajs size = " << tempTrajs.size() << endl;
 		
 		md.newBitmap();
 		md.lockBits();
-		md.drawMap(Gdiplus::Color::Blue, mapFilePath);
+		//md.drawMap(Gdiplus::Color::Blue, mapFilePath);
 		drawIntersection_v2(tempTrajs);
 		md.unlockBits();
 		md.saveBitmap("intersection_v2.png");
@@ -3374,8 +3247,8 @@ void main()
 	/*把SRC轨迹转成std轨迹格式*/
 	if (0)
 	{
-		for (int i = 0; i < trajFolders.size(); i++)
-			scanTrajFolder(trajDir, readSRCTrajs);
+		//for (int i = 0; i < trajFolders.size(); i++)
+		//	scanTrajFolder(trajDir, readSRCTrajs);
 		cout << "raw trajs's size = " << rawTrajs.size() << endl;
 		//doExtend(rawTrajs, tempTrajs, true);
 		genStdTrajFile(rawTrajs, trajDir + "20110102_03.txt");
@@ -3394,8 +3267,8 @@ void main()
 	/*用SRC的轨迹格式创建extendTraj*/	
 	if (0)
 	{
-		for (int i = 0; i < trajFolders.size(); i++)
-			scanTrajFolder(trajFolders[i], readSRCTrajs);
+		//for (int i = 0; i < trajFolders.size(); i++)
+		//	scanTrajFolder(trajFolders[i], readSRCTrajs);
 		cout << "raw trajs's size = " << rawTrajs.size() << endl;
 		double minTrajLength = 50;
 		double extendDist = 15;
@@ -3409,8 +3282,7 @@ void main()
 	{
 		//不用这个
 		double extendDist = 30;
-		trajFileName = "wy_MMTrajs.txt";
-		readStdTrajs(trajDir + trajFileName, rawTrajs);
+		readStdTrajs(trajPath, rawTrajs);
 		cout << "MMed trajs's size = " << rawTrajs.size() << endl;
 		doExtend(rawTrajs, tempTrajs, extendDist, 50, true);
 		system("pause");
@@ -3418,15 +3290,9 @@ void main()
 	}
 
 /////////////////////////////////读入轨迹文件///////////////////////////////////////
-	//trajFileName = "wy_extended_unmatched_trajs_smallarea.txt";
-	//trajFileName = "splitedTrajs.txt";
-	//trajFileName = "20110102_03.txt";
-	//trajFileName = "logs_20120207_20120208.txt";
-	trajFileName = "wy_MMTrajs1.txt";
-	//readStdTrajs(trajDir + trajFileName, tempTrajs);
-	TrajReader tReader(trajDir + trajFileName);
-	tReader.readTrajs(tempTrajs,800000);
-
+	//TrajReader tReader(trajPath);
+	//tReader.readTrajs(tempTrajs, 800000);
+	readStdTrajs(trajPath, trajs);
 	cout << "traj's size = " << trajs.size() << endl;
 //////////////////////////////////////////////////////////////////////////////////
 
@@ -3457,7 +3323,7 @@ void main()
 		md.setResolution(3000);
 		md.newBitmap();
 		md.lockBits();
-		md.drawMap(Gdiplus::Color::Black, mapFilePath);
+		//md.drawMap(Gdiplus::Color::Black, mapFilePath);
 		TrajDrawer td;
 		td.drawMMTrajs(tempTrajs, md, Gdiplus::Color::Green, false, false, false, true);
 		//drawTrajPts(tempTrajs);
@@ -3477,7 +3343,7 @@ void main()
 	{
 		md.newBitmap();
 		md.lockBits();
-		md.drawMap(Gdiplus::Color::Blue, mapFilePath);
+		//md.drawMap(Gdiplus::Color::Blue, mapFilePath);
 		drawTrajs(Gdiplus::Color::Red, trajs, true, false);
 		createGridIndex(createGridIndexForOneTraj);
 		drawGridLine(Gdiplus::Color::Green);
@@ -3492,37 +3358,6 @@ void main()
 	createGridIndex(createGridIndexForOneTraj);
 	cout << endl;
 
-	
-	//readStdTrajs("C:\\Users\\wuhao\\Desktop\\folder\\split\\splitedTrajs.txt", tempTrajs);
-	//rawMapMatching(tempTrajs, "C:\\Users\\wuhao\\Desktop\\folder\\split\\MMTrajs.txt");
-	//system("pause");
-	//exit(0);
-	
-	/**********************************************************/
-	/*test code starts from here*/
-	/*for (list<Traj*>::iterator trajIter = tempTrajs.begin(); trajIter != tempTrajs.end(); trajIter++)
-	{
-		Traj::iterator ptIter = (*trajIter)->begin(), nextPtIter = ptIter;
-		nextPtIter++;
-		while (1)
-		{
-			if (nextPtIter == (*trajIter)->end())
-				break;
-			if (//overDistLimit(*ptIter, *nextPtIter))
-				GeoPoint::distM(*ptIter, *nextPtIter) > 1000)
-			{
-				cout << "over dist!";
-				printf("pt(%.8lf,%.8lf) next(%.8lf,%.8lf)\n", (*ptIter)->lat, (*ptIter)->lon, (*nextPtIter)->lat, (*nextPtIter)->lon);
-				printf("dist = %lf\n", GeoPoint::distM(*ptIter, *nextPtIter));
-				system("pause");
-			}
-			ptIter++;
-			nextPtIter++;
-		}
-	}*/
-	/*test code ends*/
-	/**********************************************************/
-	
 	//////////////////////////////////////////////////////////////////////////
 	///Core Part
 	//////////////////////////////////////////////////////////////////////////
@@ -3550,7 +3385,7 @@ void main()
 		pngName += " [zoom in]";
 	}
 	pngName += ".png";*/
-	string pngName = trajDir + "test_cluster.png";
+	string pngName = "wangyin_geo.png";
 	md.saveBitmap(pngName);
 	cout << ">> drawing finished, output to " + pngName << endl;
 	int endTime = clock();

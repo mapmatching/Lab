@@ -1,5 +1,5 @@
 /* 
- * Last Updated at [2014/2/10 11:20] by wuhao
+ * Last Updated at [2014/9/4 20:23] by wuhao
  */
 #include "GeoPoint.h"
 #include <math.h>
