@@ -55,6 +55,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "deleteTest", "deleteTest\de
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GeoVerification", "GeoVerification\GeoVerification.vcxproj", "{18D97B44-DFAB-46A8-800F-91BA352B815B}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DCMU", "DCMU\DCMU.vcxproj", "{DAA7AD05-9F18-4121-B98D-424124707D65}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "deletedEdgeRecheck", "deletedEdgeRecheck\deletedEdgeRecheck.vcxproj", "{7C3DA50B-430D-4275-B976-176578785256}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -417,6 +421,32 @@ Global
 		{18D97B44-DFAB-46A8-800F-91BA352B815B}.Release|Win32.Build.0 = Release|Win32
 		{18D97B44-DFAB-46A8-800F-91BA352B815B}.Release|x64.ActiveCfg = Release|Win32
 		{18D97B44-DFAB-46A8-800F-91BA352B815B}.Release|x64.Build.0 = Release|Win32
+		{DAA7AD05-9F18-4121-B98D-424124707D65}.Debug|Any CPU.ActiveCfg = Debug|Win32
+		{DAA7AD05-9F18-4121-B98D-424124707D65}.Debug|Mixed Platforms.ActiveCfg = Debug|Win32
+		{DAA7AD05-9F18-4121-B98D-424124707D65}.Debug|Mixed Platforms.Build.0 = Debug|Win32
+		{DAA7AD05-9F18-4121-B98D-424124707D65}.Debug|Win32.ActiveCfg = Debug|Win32
+		{DAA7AD05-9F18-4121-B98D-424124707D65}.Debug|Win32.Build.0 = Debug|Win32
+		{DAA7AD05-9F18-4121-B98D-424124707D65}.Debug|x64.ActiveCfg = Debug|Win32
+		{DAA7AD05-9F18-4121-B98D-424124707D65}.Release|Any CPU.ActiveCfg = Release|Win32
+		{DAA7AD05-9F18-4121-B98D-424124707D65}.Release|Mixed Platforms.ActiveCfg = Release|Win32
+		{DAA7AD05-9F18-4121-B98D-424124707D65}.Release|Mixed Platforms.Build.0 = Release|Win32
+		{DAA7AD05-9F18-4121-B98D-424124707D65}.Release|Win32.ActiveCfg = Release|Win32
+		{DAA7AD05-9F18-4121-B98D-424124707D65}.Release|Win32.Build.0 = Release|Win32
+		{DAA7AD05-9F18-4121-B98D-424124707D65}.Release|x64.ActiveCfg = Release|x64
+		{DAA7AD05-9F18-4121-B98D-424124707D65}.Release|x64.Build.0 = Release|x64
+		{7C3DA50B-430D-4275-B976-176578785256}.Debug|Any CPU.ActiveCfg = Debug|Win32
+		{7C3DA50B-430D-4275-B976-176578785256}.Debug|Mixed Platforms.ActiveCfg = Debug|Win32
+		{7C3DA50B-430D-4275-B976-176578785256}.Debug|Mixed Platforms.Build.0 = Debug|Win32
+		{7C3DA50B-430D-4275-B976-176578785256}.Debug|Win32.ActiveCfg = Debug|Win32
+		{7C3DA50B-430D-4275-B976-176578785256}.Debug|Win32.Build.0 = Debug|Win32
+		{7C3DA50B-430D-4275-B976-176578785256}.Debug|x64.ActiveCfg = Debug|Win32
+		{7C3DA50B-430D-4275-B976-176578785256}.Release|Any CPU.ActiveCfg = Release|Win32
+		{7C3DA50B-430D-4275-B976-176578785256}.Release|Mixed Platforms.ActiveCfg = Release|Win32
+		{7C3DA50B-430D-4275-B976-176578785256}.Release|Mixed Platforms.Build.0 = Release|Win32
+		{7C3DA50B-430D-4275-B976-176578785256}.Release|Win32.ActiveCfg = Release|Win32
+		{7C3DA50B-430D-4275-B976-176578785256}.Release|Win32.Build.0 = Release|Win32
+		{7C3DA50B-430D-4275-B976-176578785256}.Release|x64.ActiveCfg = Release|Win32
+		{7C3DA50B-430D-4275-B976-176578785256}.Release|x64.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
