@@ -1,6 +1,6 @@
-/* 
- * Last Updated at [2014/3/4 15:47] by wuhao
- */
+/*
+* Last Updated at [2014/9/10 22:04] by wuhao
+*/
 #include "PolylineGenerator.h"
 
 double dist(Pt& pt1, Pt& pt2)
@@ -25,6 +25,25 @@ double cosAngle(Pt& pt1, Pt& pt2, Pt& pt3)
 	return (v1x * v2x + v1y * v2y) / sqrt((v1x * v1x + v1y * v1y)*(v2x * v2x + v2y * v2y));
 }
 
+void PolylineGenerator::sampling(int sampleNum)
+{
+	//////////////////////////////////////////////////////////////////////////
+	///使用随机采样对pts集中随机采样sampleNum个点
+	//////////////////////////////////////////////////////////////////////////
+	if (pts.size() < sampleNum)
+		return;
+	list<Pt> tempPts;
+	vector<Pt> pts_vec;
+	for (list<Pt>::iterator iter = pts.begin(); iter != pts.end(); ++iter)
+		pts_vec.push_back(*iter);
+	while (tempPts.size() < sampleNum)
+	{
+		int vitimId = int(((double)rand()) / RAND_MAX * (pts_vec.size() - 1));
+		tempPts.push_back(pts_vec[vitimId]);
+	}
+	pts = tempPts;
+}
+
 pair<double, double> PolylineGenerator::central_difference(double (PolylineGenerator::*f)(double, double, int), int vi)
 {
 	//////////////////////////////////////////////////////////////////////////
@@ -39,7 +58,7 @@ pair<double, double> PolylineGenerator::central_difference(double (PolylineGener
 	pair<double, double> ans;
 	double x = polyline[vi].x;
 	double y = polyline[vi].y;
-	
+
 	//求df/dx
 	for (k = 0; k < max_it; k++)
 	{
@@ -185,7 +204,7 @@ double PolylineGenerator::calcStep(int x, int y, int i)
 	hesseMat.at(0, 0) = d2f_dx2(x, y, i);
 	hesseMat.at(0, 1) = hesseMat.at(1, 0) = d2f_dxdy(x, y, i);
 	hesseMat.at(1, 1) = d2f_dy2(x, y, i);
-	
+
 	//计算gradT*H*grad
 	Matrix<double> fengmu = gradF.traspose() * hesseMat * gradF;
 
@@ -214,7 +233,10 @@ double PolylineGenerator::calculate(double x, double y, int i)
 			double _y = polyline[i + 1].y;
 			double cos = ((x - x0) * (x - _x) + (y - y0) * (y - _y)) /
 				sqrt(((x - x0) * (x - x0) + (y - y0) * (y - y0)) * ((x - _x) * (x - _x) + (y - _y) * (y - _y)));
-			double sin = sqrt(1 - cos * cos);
+			double sin_square = 1 - cos * cos;
+			if (sin_square < 0) //防止double误差出现sin_square = -0.00000001这种情况
+				sin_square = 0;
+			double sin = sqrt(sin_square);
 			double d = dist(x, y, x0, y0) * sin;
 			sigma_posi_vi += d * d;
 		}
@@ -227,11 +249,26 @@ double PolylineGenerator::calculate(double x, double y, int i)
 			double x0 = pt.x, y0 = pt.y;
 			double _x = polyline[i - 1].x;
 			double _y = polyline[i - 1].y;
-			double cos = ((x - x0) * (x - _x) + (y - y0) * (y - _y)) / 
-				sqrt(((x - x0) * (x - x0) + (y -y0) * (y - y0)) * ((x - _x) * (x - _x) + (y - _y) * (y - _y)));
-			double sin = sqrt(1 - cos * cos);
+			double cos = ((x - x0) * (x - _x) + (y - y0) * (y - _y)) /
+				sqrt(((x - x0) * (x - x0) + (y - y0) * (y - y0)) * ((x - _x) * (x - _x) + (y - _y) * (y - _y)));
+			double sin_square = 1 - cos * cos;
+			if (sin_square < 0) //防止double误差出现sin_square = -0.00000001这种情况
+				sin_square = 0;
+			double sin = sqrt(sin_square);
 			double d = dist(x, y, x0, y0) * sin;
 			sigma_nega_vi += d * d;
+
+			/**********************************************************/
+			/*test code starts from here*/
+			if (isnan(sigma_nega_vi))
+			{
+				printf("d = %lf\n dist(x,y,x0,y0) = %lf\n x = %lf, y = %lf, x0 = %lf, y0 = %lf\n", d, dist(x, y, x0, y0), x, y, x0, y0);
+				printf("sin = %lf, cos = %lf", sin, cos);
+				system("pause");
+			}
+			/*test code ends*/
+			/**********************************************************/
+
 		}
 		//printf("sigma_nega_vi = %lf\n", sigma_nega_vi);
 	}
@@ -326,7 +363,7 @@ void PolylineGenerator::genPolyline(list<Pt>& pts)
 	}
 	initialization();
 	//生成7个控制点的polyline
-	for (int i = 0; i < 6; i++)
+	for (int i = 0; i < 9; i++)
 	{
 		optimizationEx();
 		//optimization();
@@ -358,6 +395,7 @@ double PolylineGenerator::getRadius()
 
 void PolylineGenerator::initialization()
 {
+	sampling(1000);
 	polyline.clear();
 	n = pts.size();
 	r = getRadius();
@@ -421,20 +459,20 @@ void PolylineGenerator::doProject(int index)
 	///对点i更新投影集,需要更新的为Si-2,Si-1,Si,Si+1,Vi-1,Vi,Vi+1这些集合
 	//////////////////////////////////////////////////////////////////////////
 	//update S
-/*	list<PrjPoint> tempPtds;
+	/*	list<PrjPoint> tempPtds;
 
 	for (int i = -2; i <= 1; i++)
 	{
-		if (index + i < 0 || index + 1 >= polyline.size() - 1)
-			continue;
-		tempPtds.splice(tempPtds.end(), polyline[index]->vSet);
-		tempPtds.splice(tempPtds.end(), polyline[index]->sSet);
+	if (index + i < 0 || index + 1 >= polyline.size() - 1)
+	continue;
+	tempPtds.splice(tempPtds.end(), polyline[index]->vSet);
+	tempPtds.splice(tempPtds.end(), polyline[index]->sSet);
 
 	}
 	//update V
 	for (int i = -1; i <= 1; i++)
 	{
-		if (index + i < 0 || index + 1 >= polyline.size());
+	if (index + i < 0 || index + 1 >= polyline.size());
 	}
 	*/
 }
@@ -477,7 +515,7 @@ void PolylineGenerator::doProject()
 			delta_n_f += pt.dist * pt.dist;
 		}
 	}
-	lambdaP = anglePenalty * (polyline.size()-1) * pow(n, -1 / 3) * pow(delta_n_f, 0.5) / r;
+	lambdaP = anglePenalty * (polyline.size() - 1) * pow(n, -1 / 3) * pow(delta_n_f, 0.5) / r;
 }
 
 void PolylineGenerator::optimization()
@@ -531,12 +569,12 @@ void PolylineGenerator::optimization()
 	int candidateV;
 	/*for (int i = 0; i < polyline.size() - 1; i++)
 	{
-		double tempDist = dist(polyline[i], polyline[i + 1]);
-		if (tempDist > maxLength)
-		{
-			maxLength = tempDist;
-			candidateV = i;
-		}
+	double tempDist = dist(polyline[i], polyline[i + 1]);
+	if (tempDist > maxLength)
+	{
+	maxLength = tempDist;
+	candidateV = i;
+	}
 	}*/
 	double maxNum = -1;
 	for (int i = 0; i < polyline.size() - 1; i++)
@@ -563,29 +601,29 @@ void PolylineGenerator::optimizationEx()
 	double preGvi = 9999999999;
 	//对每个点迭代
 	cout << "poly size " << polyline.size() << endl;
-	for (int _i = 0; _i < 3; _i++)
+	for (int _i = 0; _i < 20; _i++)
 	{
 		for (int i = 0; i < polyline.size(); i++)
 		{
 			//直到这个点的调整幅度达到收敛阈值
 			//TEST: 先对每个点迭代3次
-			for (int iter = 0; iter < 50; iter++)
+			for (int iter = 0; iter < 100; iter++)
 			{
 				double Gvi = calculate(polyline[i].x, polyline[i].y, i);
-				if (abs(Gvi - preGvi) / Gvi < convergeThreshold)
-				{
-					break;
-				}
+				//if (abs(Gvi - preGvi) / Gvi < convergeThreshold)
+				//{
+				//		break;
+				//	}
 				//printf("Gvi = %lf\n", Gvi);
 				//求梯度
 				double (PolylineGenerator::* pCalcFunc)(double, double, int); //一个类成员函数指针变量pmf的定义
 				pCalcFunc = &PolylineGenerator::calculate;
 				pair<double, double> gradient = central_difference(pCalcFunc, i);
 				double gradient_x = gradient.first;
-				double gradient_y = gradient.second;				
+				double gradient_y = gradient.second;
 				//归一化
 				double direction_x = -gradient_x / sqrt(gradient_x * gradient_x + gradient_y * gradient_y);
-				double direction_y = -gradient_y / sqrt(gradient_x * gradient_x + gradient_y * gradient_y);				
+				double direction_y = -gradient_y / sqrt(gradient_x * gradient_x + gradient_y * gradient_y);
 				//求步长
 				//double step = calcStep(polyline[i].x, polyline[i].y, i);
 				double step = 0.2;
