@@ -11,7 +11,7 @@ void DCMU::run()
 	//Ωµ‘Î
  	for (int i = 0; i < ptIndexes.size(); i++)
  	{
- 		denoiser.run(ptIndexes[i]);
+ 		//denoiser.run(ptIndexes[i]);
  
 // 		/**********************************************************/
 // 		/*test code starts from here*/
@@ -36,11 +36,27 @@ void DCMU::run()
 
 void DCMU::run1()
 {
+	allPtIndex.drawGridLine(Gdiplus::Color::Green, md);
 	//Õ¯∏Òæ€¿‡
-	int index = 54;
+	int index = 21;
 	gridClustering();
-	denoiser.run(ptIndexes[index]);
-
+	//denoiser.run(ptIndexes[index]);
+	for (int i = 0; i < ptIndexes.size(); i++)
+	{
+		int count = 0;
+		for (int row = 0; row < ptIndexes[i]->gridHeight; row++)
+		{
+			for (int col = 0; col < ptIndexes[i]->gridWidth; col++)
+			{
+				count += ptIndexes[i]->grid[row][col]->size();
+			}
+		}
+		if (count > 50000)
+		{
+			cout << i << ": " << count <<endl;
+			//system("pause");
+		}
+	}
 	//Ωµ‘Î
 	// 	for (int i = 0; i < ptIndexes.size(); i++)
 	// 	{

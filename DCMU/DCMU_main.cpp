@@ -40,7 +40,7 @@ void initialization()
 	
 	TrajReader tr("D:\\trajectory\\singapore_data\\experiments\\big area\\newMMTrajs_unmatched.txt");
 	list<Traj*> trajs;
-	tr.readTrajs(trajs);//, 50000);
+	tr.readTrajs(trajs);// , 50000);
 	list<GeoPoint*> allPts;
 	for each(Traj* traj in trajs)
 	{

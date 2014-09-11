@@ -27,13 +27,13 @@ void initialization()
 	//¶ÁÂ·
 	//TrajReader tReader("roads_MI.txt");
 	//TrajReader tReader("roads_bones.txt");
-	TrajReader tReader("D:\\trajectory\\singapore_data\\experiments\\big area\\roads_wy2.txt");
-	//TrajReader tReader("D:\\trajectory\\singapore_data\\experiments\\big area\\roads_DCMU2.txt");
+	//TrajReader tReader("D:\\trajectory\\singapore_data\\experiments\\big area\\roads_wy2.txt");
+	TrajReader tReader("D:\\trajectory\\singapore_data\\experiments\\big area\\roads_DCMU_new.txt");
 	tReader.readTrajs(figures);
 
 	//³õÊ¼»¯»­°å
 	md.setArea(&area);
-	md.setResolution(15000);
+	md.setResolution(5000);
 	md.newBitmap();
 }
 

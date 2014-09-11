@@ -5,6 +5,7 @@
 #include "MapDrawer.h"
 #include <iomanip>
 #include <set>
+#define eps 1e-8
 
 using namespace std;
 extern MapDrawer md;
@@ -19,7 +20,7 @@ private:
 	PointGridIndex* allPtIndex;
 	vector<Cluster*> clusters;
 
-	bool isAGoodCluster(Cluster* cluster);
+	bool isATinyCluster(Cluster* cluster);
 	double cosAngle(GeoPoint* pt1, GeoPoint* pt2, GeoPoint* pt3);
 	double distM(GeoPoint* pt, vector<GeoPoint*>& polyline);
 	bool isBadClusterEx(Cluster* cluster, vector<Cluster*>& clusters, MapDrawer& md);

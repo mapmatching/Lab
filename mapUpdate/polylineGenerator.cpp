@@ -363,7 +363,7 @@ void PolylineGenerator::genPolyline(list<Pt>& pts)
 	}
 	initialization();
 	//生成7个控制点的polyline
-	for (int i = 0; i < 9; i++)
+	for (int i = 0; i < 8; i++)
 	{
 		optimizationEx();
 		//optimization();
@@ -601,7 +601,7 @@ void PolylineGenerator::optimizationEx()
 	double preGvi = 9999999999;
 	//对每个点迭代
 	cout << "poly size " << polyline.size() << endl;
-	for (int _i = 0; _i < 20; _i++)
+	for (int _i = 0; _i < 10; _i++)
 	{
 		for (int i = 0; i < polyline.size(); i++)
 		{
@@ -626,7 +626,7 @@ void PolylineGenerator::optimizationEx()
 				double direction_y = -gradient_y / sqrt(gradient_x * gradient_x + gradient_y * gradient_y);
 				//求步长
 				//double step = calcStep(polyline[i].x, polyline[i].y, i);
-				double step = 0.2;
+				double step = 0.5;
 				//printf("step = %lf, gv[%d] = %lf\n", step, i, Gvi);
 				//system("pause");
 				//移动点

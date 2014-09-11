@@ -203,7 +203,7 @@ Cluster* PtCluster::genOneCluster(int clusterId, GeoPoint* seedPt, double distTh
 void PtCluster::doDirCluster()
 {
 	double distThresM = 15;
-	double angleThres = 30.0 / 180.0 * PI;
+	double angleThres = 20.0 / 180.0 * PI;
 	int currentClusterId = clusters.size();
 	int count = 1;
 	int tenPercent = pts.size() / 10;

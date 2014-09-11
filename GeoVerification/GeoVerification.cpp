@@ -92,7 +92,7 @@ void GeoVerification::verificate(vector<Figure*>& genFigures, MapDrawer& md)
 	//correctLengthM += 25 * 20 * 2;
 	//totalGenLengthM += 25 * 20 * 2;
 	//for wang yin
-	//totalDelLengthM /= 2;
+	totalDelLengthM /= 2;
 	cout << "totalDelLength = " << totalDelLengthM << endl;
 	cout << "totalGenLength = " << totalGenLengthM << endl;
 	cout << "correctLength = " << correctLengthM << endl;
@@ -155,7 +155,7 @@ bool GeoVerification::verificateOneSegment(Segment segment, vector<Figure*>& gen
 			correctEdgeCount++;
 			correctLengthM += GeoPoint::distM(fromPt, toPt);
 		}
-		if (correctEdgeCount == 2)
+		if (correctEdgeCount == 1)
 		{
 			return true;
 		}		

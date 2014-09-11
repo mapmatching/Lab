@@ -1,5 +1,5 @@
 /* 
- * Last Updated at [2014/6/26 11:31] by wuhao
+ * Last Updated at [2014/9/11 18:05] by wuhao
  */
 
 /*
@@ -73,6 +73,11 @@ public:
 	Gdiplus::Point geoToScreen(double lat, double lon); //将地理坐标转换成屏幕坐标,返回类型为Gdiplus::Point
 	std::pair<double, double> screenToGeo(int screenX, int screenY); //将屏幕坐标转换成地理坐标,返回pair的first为lat,second为lon
 
+	//new
+	void drawInt(Gdiplus::Color color, int x, int y, int value);
+	void drawDouble(Gdiplus::Color color, int x, int y, double value, int precision = 6);
+
+
 private:
 	ULONG_PTR gdiplusToken;
 	Gdiplus::Bitmap* bm;
@@ -82,4 +87,15 @@ private:
 	void MapDrawer::bresenhamDrawLine_y(Gdiplus::Color color, int x1, int y1, int x2, int y2);
 	int GetEncoderClsid(const WCHAR* format, CLSID* pClsid);
 	wchar_t* CharToWchar(const char* c);
+};
+
+class Character
+{
+public:
+	static void drawChar(char c, MapDrawer& md); //use switch...case...
+private:
+	static const bool num[10][3][5]; //0~9数字
+	static const bool point[3][5]; //小数点
+	static const bool minus[3][5]; //负号
+	static const bool space[3][5]; //空格
 };

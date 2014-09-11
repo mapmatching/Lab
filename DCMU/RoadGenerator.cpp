@@ -15,10 +15,10 @@ void RoadGenerator::run(PointGridIndex* _allPtIndex, vector<Cluster*>& _clusters
 //////////////////////////////////////////////////////////////////////////
 ///private part
 //////////////////////////////////////////////////////////////////////////
-bool RoadGenerator::isAGoodCluster(Cluster* cluster)
+bool RoadGenerator::isATinyCluster(Cluster* cluster)
 {
 	//////////////////////////////////////////////////////////////////////////
-	///判断cluster是否值得生成polyline
+	///统计cluster经过的网格数量，少于等于2格的返回true
 	//////////////////////////////////////////////////////////////////////////
 	set<pair<int, int>> gridSet;
 	for each(GeoPoint* pt in cluster->pts)
@@ -28,9 +28,9 @@ bool RoadGenerator::isAGoodCluster(Cluster* cluster)
 			gridSet.insert(rowCol);
 	}
 	if (gridSet.size() <= 2)
-		return false;
-	else
 		return true;
+	else
+		return false;
 }
 
 double RoadGenerator::cosAngle(GeoPoint* pt1, GeoPoint* pt2, GeoPoint* pt3)
@@ -87,6 +87,8 @@ bool RoadGenerator::isBadClusterEx(Cluster* cluster, vector<Cluster*>& clusters,
 {
 	//////////////////////////////////////////////////////////////////////////
 	///判断cluster是否值得生成polyline
+	///如果cluster平均点方向和polyline的方向相差大于angleThresM_2则返回true
+	///如果polyline的两端都离其他某个polyline距离小于distThresM则返回true
 	//////////////////////////////////////////////////////////////////////////
 	double lengthThresM = 50;
 	double distThresM = 40;
@@ -131,6 +133,10 @@ bool RoadGenerator::isBadClusterEx(Cluster* cluster, vector<Cluster*>& clusters,
 			PI - abs(cluster->avgDirection - clusters[i]->avgDirection) < angleThresM_1) &&
 			cluster->polylineLengthM < clusters[i]->polylineLengthM)
 			return true;
+		//如果两端都离现有路段非常近
+		if (distM(cluster->polyline[0], clusters[i]->polyline) <= distThresM &&
+			distM(cluster->polyline[cluster->polyline.size() - 1], clusters[i]->polyline) <= distThresM)
+			return true;
 	}
 	return false;
 }
@@ -141,7 +147,7 @@ void RoadGenerator::genPolyLine(Cluster* cluster, MapDrawer& md)
 	{
 		return;
 	}
-	if (!isAGoodCluster(cluster))
+	if (isATinyCluster(cluster))
 	{
 		return;
 	}
@@ -185,6 +191,11 @@ void RoadGenerator::genPolyLine(Cluster* cluster, MapDrawer& md)
 			double vec_y = pt->lat - prePt->lat;
 			double angle = acos(vec_x / sqrt(vec_x * vec_x + vec_y * vec_y));
 			//printf("old_angle = %.8lf, pre_angle = %.8lf, vec_y = %.8lf\n", angle / PI * 180.0, preAngle / PI * 180.0, vec_y);
+			if (abs(vec_x) < eps && abs(vec_y) < eps)
+			{
+				prePt = pt;
+				continue;
+			}
 			if (vec_y < 0)
 			{
 				if (preAngle > 2 * PI)
@@ -277,12 +288,12 @@ void RoadGenerator::genAllPolyLines()
 			continue;
 		if (isBadClusterEx(clusters[i], clusters, md))
 		{
-			//drawPolyline(clusters[i], md, Color::Aqua);
+			drawPolyline(clusters[i], md, Gdiplus::Color::Aqua);
 			clusters[i]->polyline.clear();
 		}
 		else
 		{
-			//drawPolyline(clusters[i], md, Color::Gray);
+			drawPolyline(clusters[i], md, Gdiplus::Color::Gray);
 		}
 	}
 
@@ -390,6 +401,9 @@ GeoPoint* RoadGenerator::intersectCheck(GeoPoint* p1, GeoPoint* p2, vector<GeoPo
 
 void RoadGenerator::refineOnePolyline(Cluster* objectCluster)
 {
+	//////////////////////////////////////////////////////////////////////////
+	///
+	//////////////////////////////////////////////////////////////////////////
 	vector<GeoPoint*> newPolyline;
 	double thresholdM = 30;  //如果当前扫描距离超过thresholdM则不切断
 
