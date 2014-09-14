@@ -6,6 +6,7 @@
 #include "Denoiser.h"
 #include "PtCluster.h"
 #include "RoadGenerator.h"
+#include "PointMover.h"
 using namespace std;
 
 extern Map roadNetwork;
@@ -28,6 +29,7 @@ private:
 	
 	//denoise
 	Denoiser denoiser;
+	PointMover ptMover;
 
 	//direction clustering
 	PtCluster ptCluster;

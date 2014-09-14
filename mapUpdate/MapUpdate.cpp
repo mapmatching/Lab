@@ -25,7 +25,9 @@ using namespace std;
 using namespace Gdiplus;
 
 //Area area(1.294788, 1.327723, 103.784667, 103.825200); //small
-Area area(1.294788, 1.393593, 103.784667, 103.906266); //big
+//Area area(1.294788, 1.393593, 103.784667, 103.906266); //big
+//Area area(1.343593, 1.442398, 103.784667, 103.906266); //big2
+Area area(1.294788, 1.393593, 103.704667, 103.826266); //big3
 int size = 5000;
 
 bool zoomed = true;
@@ -71,7 +73,7 @@ void extractPts(string trajFilePath)
 		ifs >> lat >> lon >> mmRoadId;
 		if (mmRoadId == -1)
 		{
-			ofs << time  << " " << lat << " " << lon << endl;
+			ofs << time << " " << lat << " " << lon << endl;
 		}
 	}
 	ofs.close();
@@ -145,7 +147,7 @@ void dumpOutPts(string outFilePath, list<GeoPoint*>& pts)
 	}
 	for each (GeoPoint* pt in pts)
 	{
-		ofs << pt->time << " " << pt->lat << " " << pt->lon << " " << pt->direction  << " " << pt->clusterId << endl;
+		ofs << pt->time << " " << pt->lat << " " << pt->lon << " " << pt->direction << " " << pt->clusterId << endl;
 	}
 	ofs.close();
 }
@@ -228,10 +230,10 @@ void gridClustering()
 					//根据连通分支去索引里把点输出
 					ofstream ofs("cluster " + StringOperator::intToString(count) + ".txt");
 					ofs << fixed << showpoint << setprecision(8);
-					
+
 					for (int i = 0; i < connectingCompnt.size(); i++)
 					{
-						for each ( GeoPoint* pt in *(ptIndex.grid[connectingCompnt[i].first][connectingCompnt[i].second]) )
+						for each (GeoPoint* pt in *(ptIndex.grid[connectingCompnt[i].first][connectingCompnt[i].second]))
 						{
 							ofs << pt->time << " " << pt->lat << " " << pt->lon << endl;
 						}
@@ -264,20 +266,20 @@ void calLMD(GeoPoint* pt, int k, double kNNThresholdM)
 	pt->lmd = lmd;
 	/*for (int i = 0; i < kNNSet.size(); i++)
 	{
-		printf("%lf\n", kNNSet[i]->extendField0);
+	printf("%lf\n", kNNSet[i]->extendField0);
 	}
 	system("pause");*/
 }
 
 void outlierValidation(GeoPoint* pt, int gridRange, double supportRatio)
 {
-	
+
 	/**********************************************************/
 	/*test code starts from here*/
 	/*if (pt->extendField1 > 20.0)
 	{
-		pt->extendField2 = 1;
-		return;
+	pt->extendField2 = 1;
+	return;
 	}*/
 	if (pt->lmd < 3.0)
 	{
@@ -289,16 +291,16 @@ void outlierValidation(GeoPoint* pt, int gridRange, double supportRatio)
 	//return;
 	/*test code ends*/
 	/**********************************************************/
-	
+
 	/*vector<GeoPoint*> nearPts;
 	ptIndex.getNearPts(pt, gridRange, nearPts);
 	for (int i = 0; i < nearPts.size(); i++)
 	{
-		if (nearPts[i]->extendField1 / pt->extendField1 > supportRatio)
-		{
-			pt->extendField2 = 1;
-			return;
-		}
+	if (nearPts[i]->extendField1 / pt->extendField1 > supportRatio)
+	{
+	pt->extendField2 = 1;
+	return;
+	}
 	}*/
 	pair<int, int> rolCol = ptIndex.getRowCol(pt);
 	int rowPt = rolCol.first;
@@ -380,7 +382,7 @@ void outlierDetecting()
 	double kNNThresholdM = 3;
 	int gridRange = 2;
 	double supportRatio = 4.0;
-	
+
 	for (int row = 0; row < ptIndex.gridHeight; row++)
 	{
 		for (int col = 0; col < ptIndex.gridWidth; col++)
@@ -546,7 +548,7 @@ void countEx(GeoPoint* p0, GeoPoint* p, vector<int>& countVec, double d, double 
 	printf("p0p(%.8lf, %.8lf)\n", vec_p0p.first, vec_p0p.second);
 	printf("t1 = %lf, t2 = %lf, ts = %lf, te = %lf\n", theta_1, theta_2, theta_s, theta_e);
 	system("pause");*/
-	for (double dir = 0, i=0; dir < PI; dir+=angleStep, i++)
+	for (double dir = 0, i = 0; dir < PI; dir += angleStep, i++)
 	{
 		if (dir >= theta_s && dir <= theta_e)
 			countVec[i]++;
@@ -628,7 +630,7 @@ void drawPtsDir(list<GeoPoint*>& pts, MapDrawer& md)
 //dump out func
 void dumpPtsWithDir(list<GeoPoint*>& pts)
 {
-	dumpOutPts(ptsFileName+ "_dir.txt", pts);
+	dumpOutPts(ptsFileName + "_dir.txt", pts);
 }
 
 
@@ -694,8 +696,8 @@ void getPtsNearCluster(Cluster* cluster, double distThresM, double angleThres, v
 		{
 			for each (GeoPoint* pt in *(ptIndex.grid[row][col]))
 			{
-				if (pt->clusterId == -1 && 
-					(abs(pt->direction - cluster->direction) < angleThres || 
+				if (pt->clusterId == -1 &&
+					(abs(pt->direction - cluster->direction) < angleThres ||
 					PI - abs(pt->direction - cluster->direction) < angleThres))
 				{
 					nearPts.push_back(pt);
@@ -778,7 +780,7 @@ void doDirCluster(list<GeoPoint*>& pts, vector<Cluster*>& clusters)
 		Cluster* cluster = genOneCluster(currentClusterId, pt, distThresM, angleThres);
 		clusters.push_back(cluster);
 		currentClusterId++;
-		
+
 	}
 }
 //visualization func
@@ -840,7 +842,7 @@ void dumpInPtsWithCluster(string ptsFilePath, list<GeoPoint*>& pts, vector<Clust
 			}
 			cluster = new Cluster;
 			currentClusterId++;
-			cluster->clusterId = currentClusterId;			
+			cluster->clusterId = currentClusterId;
 		}
 		cluster->add(pt);
 	}
@@ -953,7 +955,7 @@ bool isBadClusterEx(Cluster* cluster, vector<Cluster*>& clusters, MapDrawer& md)
 	}
 	avgPtDirection /= cluster->pts.size();
 
-	
+
 	/**********************************************************/
 	/*test code starts from here*/
 	//draw polyline dir
@@ -964,7 +966,7 @@ bool isBadClusterEx(Cluster* cluster, vector<Cluster*>& clusters, MapDrawer& md)
 	md.drawLine(Color::Blue, cluster->polyline[0]->lat, cluster->polyline[0]->lon, ptEnd->lat, ptEnd->lon);
 	/*test code ends*/
 	/**********************************************************/
-		if (abs(cluster->avgDirection - avgPtDirection) > angleThresM_2 &&
+	if (abs(cluster->avgDirection - avgPtDirection) > angleThresM_2 &&
 		PI - abs(cluster->avgDirection - avgPtDirection) > angleThresM_2)
 		return true;
 
@@ -986,7 +988,7 @@ bool isBadClusterEx(Cluster* cluster, vector<Cluster*>& clusters, MapDrawer& md)
 }
 
 void genPolyLine(Cluster* cluster, MapDrawer& md)
-{	
+{
 	if (cluster->pts.size() < 20)
 	{
 		return;
@@ -996,7 +998,7 @@ void genPolyLine(Cluster* cluster, MapDrawer& md)
 		return;
 	}
 	printf("clusterId = %d, #pts = %d\n", cluster->clusterId, cluster->pts.size());
-	
+
 	PolylineGenerator pg;
 	//将cluster里的轨迹点全部倒到pts里
 	list<Pt> pts;
@@ -1050,7 +1052,7 @@ void genPolyLine(Cluster* cluster, MapDrawer& md)
 				}
 				else
 				{
-					if (abs(PI-angle - preAngle) < abs(2 * PI - angle - preAngle))
+					if (abs(PI - angle - preAngle) < abs(2 * PI - angle - preAngle))
 						angle = PI - angle;
 					else
 						angle = 2 * PI - angle;
@@ -1105,14 +1107,14 @@ void genAllPolyLinesEx()
 	//////////////////////////////////////////////////////////////////////////
 	///
 	//////////////////////////////////////////////////////////////////////////
-	
+
 }
 
 void drawPolyline(Cluster* cluster, MapDrawer& md, Color color)
 {
 	for (int i = 0; i < cluster->polyline.size() - 1; i++)
 	{
-		md.drawBoldLine(color, cluster->polyline[i]->lat, cluster->polyline[i]->lon, 
+		md.drawBoldLine(color, cluster->polyline[i]->lat, cluster->polyline[i]->lon,
 			cluster->polyline[i + 1]->lat, cluster->polyline[i + 1]->lon);
 	}
 	for (int i = 0; i < cluster->polyline.size(); i++)
@@ -1192,13 +1194,13 @@ GeoPoint* intersectCheck(GeoPoint* p1, GeoPoint* p2, vector<GeoPoint*>& polyline
 		double val2 = A * _x2 + B * _y2 + C;
 		double _val1 = _A * x1 + _B * y1 + _C;
 		double _val2 = _A * x2 + _B * y2 + _C;
-		
+
 		/**********************************************************/
 		/*test code starts from here*/
 		//printf("val1 = %.8lf, val2 = %.8lf, _val1 = %.8lf, _val2 = %.8lf\n", val1, val2, _val1, _val2);
 		/*test code ends*/
 		/**********************************************************/
-		
+
 		if (val1 * val2 < 1e-4 && _val1 * _val2 <= 1e-4)
 		{
 			//cal intersection			
@@ -1239,7 +1241,7 @@ void refineOnePolyline(Cluster* objectCluster, vector<Cluster*>& allClusters)
 			if (cluster == objectCluster)
 				continue;
 			intersection_s = intersectCheck(objectCluster->polyline[i], objectCluster->polyline[i + 1], cluster->polyline);
-			
+
 			if (intersection_s == NULL) //无交点
 				continue;
 			else //有交点
@@ -1253,11 +1255,11 @@ void refineOnePolyline(Cluster* objectCluster, vector<Cluster*>& allClusters)
 				intersectAfter_s = i;
 				cutFinishFlag = true;
 				break;
-			}				
+			}
 		}
 		if (cutFinishFlag)
 			break;
-		currentLength += GeoPoint::distM(objectCluster->polyline[i], objectCluster->polyline[i+1]);
+		currentLength += GeoPoint::distM(objectCluster->polyline[i], objectCluster->polyline[i + 1]);
 	}
 
 	//find back cut point
@@ -1265,7 +1267,7 @@ void refineOnePolyline(Cluster* objectCluster, vector<Cluster*>& allClusters)
 	currentLength = 0;
 	int intersectAfter_e = -1; //记录intersection前面离其最近的顶点索引号
 	//对于objectCluster的每一段
-	for (int i = objectCluster->polyline.size()-2; i >= 0; i--)
+	for (int i = objectCluster->polyline.size() - 2; i >= 0; i--)
 	{
 		if (currentLength > thresholdM)
 			break;
@@ -1281,7 +1283,7 @@ void refineOnePolyline(Cluster* objectCluster, vector<Cluster*>& allClusters)
 				continue;
 			else //有交点
 			{
-				if (currentLength + GeoPoint::distM(objectCluster->polyline[i+1], intersection_e) > thresholdM)
+				if (currentLength + GeoPoint::distM(objectCluster->polyline[i + 1], intersection_e) > thresholdM)
 				{
 					intersection_e = NULL;
 					cutFinishFlag = true;
@@ -1376,25 +1378,25 @@ pair<Edge*, double> getNearestEdge(GeoPoint* pt)//, GeoPoint* prePt)
 	///返回的第一个参数记录最近路段的指针，第二个参数double记录最短距离,单位为米
 	///如果有路段相交则优先返回相交路段，第二个参数返回一个负值（-1）
 	//////////////////////////////////////////////////////////////////////////
-	
+
 	double minDistM = 9999.0;
 	Edge* nearestEdge = NULL;
 	vector<Edge*> nearEdges;
 	roadNetwork.getNearEdges(pt->lat, pt->lon, 1000.0, nearEdges);
-	
-		//////////////////////////////////////////////////////////////////////////
-		///异常
-		//////////////////////////////////////////////////////////////////////////
-		/**********************************************************/
-		/*test code starts from here*/
-		if (nearEdges.size() == 0)
-		{
-			cout << "[异常] nearEdges's size = 0 in getCandidateCluster step!" << endl;
-			system("pause");
-		}
-		/*test code ends*/
-		/**********************************************************/
-	
+
+	//////////////////////////////////////////////////////////////////////////
+	///异常
+	//////////////////////////////////////////////////////////////////////////
+	/**********************************************************/
+	/*test code starts from here*/
+	if (nearEdges.size() == 0)
+	{
+		cout << "[异常] nearEdges's size = 0 in getCandidateCluster step!" << endl;
+		system("pause");
+	}
+	/*test code ends*/
+	/**********************************************************/
+
 	//看不相交的情况
 	for (int i = 0; i < nearEdges.size(); i++)
 	{
@@ -1409,15 +1411,15 @@ pair<Edge*, double> getNearestEdge(GeoPoint* pt)//, GeoPoint* prePt)
 	//看相交的情况
 	/*for (int i = 0; i < nearEdges.size(); i++)
 	{
-		vector<GeoPoint*> tempPolyline;
-		for (list<GeoPoint*>::iterator ptIter = nearEdges[i]->figure->begin(); ptIter != nearEdges[i]->figure->end(); ptIter++)
-		{
-			tempPolyline.push_back(*ptIter);
-		}
-		if (intersectCheck(prePt, pt, tempPolyline))
-		{
-			return make_pair(nearEdges[i], -1);
-		}
+	vector<GeoPoint*> tempPolyline;
+	for (list<GeoPoint*>::iterator ptIter = nearEdges[i]->figure->begin(); ptIter != nearEdges[i]->figure->end(); ptIter++)
+	{
+	tempPolyline.push_back(*ptIter);
+	}
+	if (intersectCheck(prePt, pt, tempPolyline))
+	{
+	return make_pair(nearEdges[i], -1);
+	}
 	}*/
 	return make_pair(nearestEdge, minDistM);
 }
@@ -1560,7 +1562,7 @@ int extendAndSplitEdge(GeoPoint* prePt, GeoPoint* succPt, Edge* renketsusaki)
 	double A = y2 - y1;
 	double B = x1 - x2;
 	double C = -A * x1 - B * y1;
-	
+
 	double intersectX = -1.0;
 	double intersectY = -1.0;
 	Figure::iterator ptIter = renketsusaki->figure->begin(), nextPtIter = ptIter;
@@ -1580,7 +1582,7 @@ int extendAndSplitEdge(GeoPoint* prePt, GeoPoint* succPt, Edge* renketsusaki)
 		_x2 *= rate;
 		_y1 *= rate;
 		_y2 *= rate;
-		
+
 		if ((A * _x1 + B * _y1 + C) * (A * _x2 + B * _y2 + C) < 1e-4) //如果有交点
 		{
 			/**********************************************************/
@@ -1590,7 +1592,7 @@ int extendAndSplitEdge(GeoPoint* prePt, GeoPoint* succPt, Edge* renketsusaki)
 			printf("%lf,%lf\n",(A * _x1 + B * _y1 + C), (A * _x2 + B * _y2 + C));*/
 			/*test code ends*/
 			/**********************************************************/
-					
+
 			//求交点
 			double _A = _y2 - _y1;
 			double _B = _x1 - _x2;
@@ -1630,7 +1632,7 @@ void addOneRoad(Cluster* cluster)
 	double splitRoadThresM = 70;
 	GeoPoint* firstPt = polyline[0];
 	GeoPoint* lastPt = polyline[polyline.size() - 1];
-	
+
 	//create figure
 	Figure* newFigure = new Figure();
 	for (int i = 0; i < polyline.size(); i++)
@@ -1638,7 +1640,7 @@ void addOneRoad(Cluster* cluster)
 		GeoPoint* pt = polyline[i];
 		newFigure->push_back(pt);
 	}
-	
+
 	//connectivity of the head
 	pair<Edge*, double> tempPair = getNearestEdge(firstPt);
 	Edge* renketsusaki = tempPair.first;
@@ -1646,17 +1648,17 @@ void addOneRoad(Cluster* cluster)
 	double distToRenketsusaki_s = GeoPoint::distM(firstPt, renketsusaki->figure->front()); //记录head到连结先的头部距离
 	double distToRenketsusaki_e = GeoPoint::distM(firstPt, renketsusaki->figure->back()); //记录head到连结先的尾部距离
 	double distToRenketsusaki_Endpoint = distToRenketsusaki_s < distToRenketsusaki_e ? distToRenketsusaki_s : distToRenketsusaki_e; //取两个距离里面小的那个
-	
+
 	/**********************************************************/
 	/*test code starts from here*/
 	cout << "开始加入head" << endl;
 	/*test code ends*/
 	/**********************************************************/
-	
+
 	int newStartNodeId = -1;
 	if (distToRenketsusaki < splitRoadThresM)
 	{
-		if ( abs(distToRenketsusaki - distToRenketsusaki_Endpoint) < 10 ) //最短距离与到端点距离相差不大就直接连端点
+		if (abs(distToRenketsusaki - distToRenketsusaki_Endpoint) < 10) //最短距离与到端点距离相差不大就直接连端点
 		{
 			if (distToRenketsusaki_s < distToRenketsusaki_e)
 				newStartNodeId = renketsusaki->startNodeId;
@@ -1698,7 +1700,7 @@ void addOneRoad(Cluster* cluster)
 	cout << "newStartNodeId = " << newStartNodeId << endl;
 	/*test code ends*/
 	/**********************************************************/
-	
+
 	/**********************************************************/
 	/*test code starts from here*/
 	cout << "开始加入tail" << endl;
@@ -1768,7 +1770,7 @@ void addOneRoad(Cluster* cluster)
 	int newEdgeid = roadNetwork.insertEdge(newFigure, newStartNodeId, newEndNodeId);
 	int newEdgeidR = roadNetwork.insertEdge(newFigureReverse, newEndNodeId, newStartNodeId);
 
-	
+
 }
 
 //new ver
@@ -1788,13 +1790,13 @@ void extend(Cluster* cluster)
 		newFigure->push_back(pt);
 	}
 	//extend head
-		//直接连intersection
+	//直接连intersection
 
-		//延长相交
+	//延长相交
 
 	//extend tail
-		//直接连intersection
-		//延长相交
+	//直接连intersection
+	//延长相交
 }
 
 void addOneRoadEx(Cluster* cluster)
@@ -1811,7 +1813,7 @@ void addAllPolylines(vector<Cluster*>& allClusters)
 
 		if (candidateCluster == NULL)
 			break;
-		
+
 		/**********************************************************/
 		/*test code starts from here*/
 		if (candidateCluster->clusterId == 44)
@@ -1833,6 +1835,27 @@ void addAllPolylines(vector<Cluster*>& allClusters)
 //////////////////////////////////////////////////////////////////////////
 ///expTest
 //////////////////////////////////////////////////////////////////////////
+
+void deleteEdge()
+{
+	roadNetwork.setArea(&area);
+	roadNetwork.openOld("D:\\trajectory\\singapore_data\\singapore_map\\", 50);
+	ExpGenerator eg;
+	eg.deleteForGeo();
+
+	md.setArea(&area);
+	md.setResolution(5000);
+	md.newBitmap();
+	md.lockBits();
+
+	roadNetwork.drawMap(Color::Black, md);
+	roadNetwork.drawDeletedEdges(Gdiplus::Color::Red, md);
+	md.unlockBits();
+	md.saveBitmap("deleteEdge.png");
+	system("pause");
+	exit(0);
+}
+
 void expTest()
 {
 	//////////////////////////////////////////////////////////////////////////
@@ -1842,9 +1865,10 @@ void expTest()
 	roadNetwork.openOld("D:\\trajectory\\singapore_data\\singapore_map\\", 50);
 	originalRoadNetwork.setArea(&area);
 	originalRoadNetwork.openOld("D:\\trajectory\\singapore_data\\singapore_map\\", 50);
-	roadNetwork.deleteEdges("D:\\trajectory\\singapore_data\\experiments\\big area\\deletedEdges.txt");
+	roadNetwork.deleteEdges("D:\\trajectory\\singapore_data\\experiments\\big area\\geo\\area3\\deletedEdges.txt");
 
 	ExpGenerator eg;
+
 	eg.inputFileNames.push_back("logs_20120207_20120208.txt");
 	eg.inputFileNames.push_back("logs_20120208_20120209.txt");
 	eg.inputFileNames.push_back("logs_20120209_20120210.txt");
@@ -1857,30 +1881,27 @@ void expTest()
 	eg.inputFileNames.push_back("logs_20120218_20120219.txt");
 	eg.setArea(&area);
 
-	//eg.extractUnmatchedTrajs();
-	system("pause");
-	exit(0);
 	//eg.genExpData();
 	//system("pause");
 	//exit(0);
 	/**********************************************************/
 	/*test code starts from here*/
-	TrajReader tr("D:\\trajectory\\singapore_data\\experiments\\big area\\newMMTrajs.txt");
+	TrajReader tr("D:\\trajectory\\singapore_data\\experiments\\big area\\geo\\area3\\newMMTrajs.txt");
 	list<Traj*> trajs;
-	tr.readTrajs(trajs,50000);
+	tr.readTrajs(trajs);// , 50000);
 	/*test code ends*/
 	/**********************************************************/
 
-	
+
 	//draw
 	md.setArea(&area);
 	md.setResolution(5000);
 	md.newBitmap();
 	md.lockBits();
 
-	//roadNetwork.drawMap(Color::Black, md);
-	//roadNetwork.drawDeletedEdges(Gdiplus::Color::Red, md);
-	TrajDrawer::drawMMTrajs(trajs, md, Color::Red, false, true, false, true);
+	roadNetwork.drawMap(Color::Black, md);
+	roadNetwork.drawDeletedEdges(Gdiplus::Color::Red, md);
+	TrajDrawer::drawMMTrajs(trajs, md, Color::Red, false, false, false, true);
 	md.unlockBits();
 	md.saveBitmap("expTest.png");
 	system("pause");
@@ -1913,7 +1934,7 @@ void testTCC()
 	md.setArea(&area);
 	md.setResolution(15000);
 	vector<Traj*> trajs;
-	tr.readTrajs(trajs,10000);
+	tr.readTrajs(trajs, 10000);
 	md.newBitmap();
 	md.lockBits();
 	TrajDrawer::drawTrajs(trajs, md, Color::Red, false, true);
@@ -1923,22 +1944,24 @@ void testTCC()
 
 void main()
 {
-	
+	int startTime = clock();
+	srand((unsigned)time(NULL));
 	/**********************************************************/
 	/*test code starts from here*/
+	//deleteEdge();
 	expTest();
 	/*test code ends*/
 	/**********************************************************/
-	
+
 
 	testSampleId = 11;
 	workspaceFolder = "D:\\trajectory\\singapore_data\\experiments\\unmatched pts\\";
-	
+
 	//ptsFileName = "cluster " + StringOperator::intToString(testSampleId) + "";
 	//ptsFileName = "cluster " + StringOperator::intToString(testSampleId) + "_without_noise";
 	//ptsFileName = "cluster " + StringOperator::intToString(testSampleId) + "_without_noise_dir";
 	ptsFileName = "cluster " + StringOperator::intToString(testSampleId) + "_without_noise_dir_cluster";
-	pngFileName = "out"; 
+	pngFileName = "out";
 
 	roadNetwork.setArea(&area);
 	roadNetwork.openOld("D:\\trajectory\\singapore_data\\singapore_map\\", 50);
@@ -1953,17 +1976,17 @@ void main()
 	vector<Cluster*> clusters;
 	md.setArea(&area);
 	md.setResolution(5000);
-	
+
 	//dump in
 	//dumpInPts(workspaceFolder + ptsFileName + ".txt", pts); //废弃，不用
 	//dumpInPtsEx(workspaceFolder + ptsFileName + ".txt", pts);
 	//dumpInPtsWithCluster(workspaceFolder + ptsFileName + ".txt", pts, clusters);
 	//ptIndex.createIndex(pts, &area, 300);
-	
+
 	//detect outlier
 	//outlierDetecting();
 	//dumpPtsWithoutNoise(pts);
-	
+
 	//cal dir
 	//md.setResolution(15000);
 	//calPtsDirs(pts);
@@ -1979,7 +2002,7 @@ void main()
 	md.newBitmap();
 	md.lockBits();
 	ptIndex.drawGridLine(Gdiplus::Color::Green, md);
-	
+
 	//drawPts(md, pts, Color::Blue);
 	//drawPtsWithoutOutliers(md, Color::Red);
 	//drawPtsDir(pts, md);
