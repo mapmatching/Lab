@@ -57,6 +57,10 @@ void DCMU::run1()
 			//system("pause");
 		}
 	}
+
+	ptMover.run(ptIndexes[index]);
+	ptMover.drawPoints();
+	return;
 	//Ωµ‘Î
 	// 	for (int i = 0; i < ptIndexes.size(); i++)
 	// 	{

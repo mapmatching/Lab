@@ -152,6 +152,7 @@
     <ClCompile Include="MapDrawer.cpp" />
     <ClCompile Include="MapMatching.cpp" />
     <ClCompile Include="PointGridIndex.cpp" />
+    <ClCompile Include="PointMover.cpp" />
     <ClCompile Include="polylineGenerator.cpp" />
     <ClCompile Include="PtCluster.cpp" />
     <ClCompile Include="RoadGenerator.cpp" />
@@ -168,6 +169,7 @@
     <ClInclude Include="MapMatching.h" />
     <ClInclude Include="Matrix.h" />
     <ClInclude Include="PointGridIndex.h" />
+    <ClInclude Include="PointMover.h" />
     <ClInclude Include="PolylineGenerator.h" />
     <ClInclude Include="PtCluster.h" />
     <ClInclude Include="RoadGenerator.h" />
