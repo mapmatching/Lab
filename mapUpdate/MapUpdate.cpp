@@ -25,7 +25,9 @@ using namespace std;
 using namespace Gdiplus;
 
 //Area area(1.294788, 1.327723, 103.784667, 103.825200); //small
-Area area(1.294788, 1.393593, 103.784667, 103.906266); //big
+//Area area(1.294788, 1.393593, 103.784667, 103.906266); //big
+//Area area(1.343593, 1.442398, 103.784667, 103.906266); //big2
+Area area(1.294788, 1.393593, 103.704667, 103.826266); //big3
 int size = 5000;
 
 bool zoomed = true;
@@ -1833,6 +1835,27 @@ void addAllPolylines(vector<Cluster*>& allClusters)
 //////////////////////////////////////////////////////////////////////////
 ///expTest
 //////////////////////////////////////////////////////////////////////////
+
+void deleteEdge()
+{
+	roadNetwork.setArea(&area);
+	roadNetwork.openOld("D:\\trajectory\\singapore_data\\singapore_map\\", 50);
+	ExpGenerator eg;
+	eg.deleteForGeo();
+
+	md.setArea(&area);
+	md.setResolution(5000);
+	md.newBitmap();
+	md.lockBits();
+
+	roadNetwork.drawMap(Color::Black, md);
+	roadNetwork.drawDeletedEdges(Gdiplus::Color::Red, md);
+	md.unlockBits();
+	md.saveBitmap("deleteEdge.png");
+	system("pause");
+	exit(0);
+}
+
 void expTest()
 {
 	//////////////////////////////////////////////////////////////////////////
@@ -1842,9 +1865,10 @@ void expTest()
 	roadNetwork.openOld("D:\\trajectory\\singapore_data\\singapore_map\\", 50);
 	originalRoadNetwork.setArea(&area);
 	originalRoadNetwork.openOld("D:\\trajectory\\singapore_data\\singapore_map\\", 50);
-	roadNetwork.deleteEdges("D:\\trajectory\\singapore_data\\experiments\\big area\\deletedEdges.txt");
+	roadNetwork.deleteEdges("D:\\trajectory\\singapore_data\\experiments\\big area\\geo\\area3\\deletedEdges.txt");
 
 	ExpGenerator eg;
+	
 	eg.inputFileNames.push_back("logs_20120207_20120208.txt");
 	eg.inputFileNames.push_back("logs_20120208_20120209.txt");
 	eg.inputFileNames.push_back("logs_20120209_20120210.txt");
@@ -1857,17 +1881,14 @@ void expTest()
 	eg.inputFileNames.push_back("logs_20120218_20120219.txt");
 	eg.setArea(&area);
 
-	//eg.extractUnmatchedTrajs();
-	system("pause");
-	exit(0);
 	//eg.genExpData();
 	//system("pause");
 	//exit(0);
 	/**********************************************************/
 	/*test code starts from here*/
-	TrajReader tr("D:\\trajectory\\singapore_data\\experiments\\big area\\newMMTrajs.txt");
+	TrajReader tr("D:\\trajectory\\singapore_data\\experiments\\big area\\geo\\area3\\newMMTrajs.txt");
 	list<Traj*> trajs;
-	tr.readTrajs(trajs,50000);
+	tr.readTrajs(trajs);// , 50000);
 	/*test code ends*/
 	/**********************************************************/
 
@@ -1878,9 +1899,9 @@ void expTest()
 	md.newBitmap();
 	md.lockBits();
 
-	//roadNetwork.drawMap(Color::Black, md);
-	//roadNetwork.drawDeletedEdges(Gdiplus::Color::Red, md);
-	TrajDrawer::drawMMTrajs(trajs, md, Color::Red, false, true, false, true);
+	roadNetwork.drawMap(Color::Black, md);
+	roadNetwork.drawDeletedEdges(Gdiplus::Color::Red, md);
+	TrajDrawer::drawMMTrajs(trajs, md, Color::Red, false, false , false, true);
 	md.unlockBits();
 	md.saveBitmap("expTest.png");
 	system("pause");
@@ -1923,9 +1944,11 @@ void testTCC()
 
 void main()
 {
-	
+	int startTime = clock();
+	srand((unsigned)time(NULL));
 	/**********************************************************/
 	/*test code starts from here*/
+	//deleteEdge();
 	expTest();
 	/*test code ends*/
 	/**********************************************************/

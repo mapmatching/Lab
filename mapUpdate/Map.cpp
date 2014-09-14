@@ -1362,7 +1362,7 @@ void Map::deleteEdges(string path)
 	ifstream ifs(path);
 	if (!ifs)
 	{
-		cout << "open file " << path << " error!" << endl;
+		cout << "open file " << path << " error! in func Map::deleteEdges(string path)" << endl;
 	}
 	int edgeId;
 	vector<int> deletedEdgesId;
