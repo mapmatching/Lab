@@ -1,6 +1,6 @@
-/*
-* Last Updated at [2014/9/10 22:04] by wuhao
-*/
+/* 
+ * Last Updated at [2014/9/15 14:08] by wuhao
+ */
 #include "PolylineGenerator.h"
 
 double dist(Pt& pt1, Pt& pt2)
@@ -297,6 +297,14 @@ double PolylineGenerator::calculate(double x, double y, int i)
 		pvi += dist(x, y, polyline[i - 1].x, polyline[i - 1].y);
 		pvi += r * r * (1 + cosAngle(polyline[i - 1], Pt(x, y), polyline[i + 1]));
 		pvi += dist(x, y, polyline[i + 1].x, polyline[i + 1].y);
+		if (isnan(pvi))
+		{
+			printf("dist(x, y, polyline[i - 1].x, polyline[i - 1].y) = %lf\n", dist(x, y, polyline[i - 1].x, polyline[i - 1].y));
+			printf("dist(x, y, polyline[i + 1].x, polyline[i + 1].y) = %lf\n", dist(x, y, polyline[i + 1].x, polyline[i + 1].y));
+			printf("r = %lf\n", r);
+			printf("cosAngle(polyline[i - 1], Pt(x, y), polyline[i + 1]) = %lf\n", cosAngle(polyline[i - 1], Pt(x, y), polyline[i + 1]));
+			system("pause");
+		}
 	}
 	else
 	{
@@ -304,29 +312,68 @@ double PolylineGenerator::calculate(double x, double y, int i)
 		{
 			pvi += dist(x, y, polyline[i + 1].x, polyline[i + 1].y); //μ+(vi)
 			pvi += r * r * (1 + cosAngle(Pt(x, y), polyline[i + 1], polyline[i + 2])); //π(vi+1)
+			if (isnan(pvi))
+			{
+				printf("dist(x, y, polyline[i + 1].x, polyline[i + 1].y) = %lf\n", dist(x, y, polyline[i + 1].x, polyline[i + 1].y));
+				printf("r = %lf\n", r);
+				printf("cosAngle(Pt(x, y), polyline[i + 1], polyline[i + 2]) = %lf\n", cosAngle(Pt(x, y), polyline[i + 1], polyline[i + 2]));
+				printf("x = %lf, y = %lf, polyline[i + 1].x = %lf, polyline[i + 1].y = %lf\n", x, y, polyline[i + 1].x, polyline[i + 1].y);
+				printf("polyline[i + 2].x = %lf, polyline[i + 2].y = %lf\n", polyline[i + 2].x, polyline[i + 2].y);
+				system("pause");
+			}
 		}
 		else if (i == 1)
 		{
 			pvi += dist(x, y, polyline[i - 1].x, polyline[i - 1].y); //μ-(vi)
 			pvi += r * r * (1 + cosAngle(polyline[i - 1], Pt(x, y), polyline[i + 1])); //π(vi)
 			pvi += r * r * (1 + cosAngle(Pt(x, y), polyline[i + 1], polyline[i + 2])); //π(vi+1)
+			if (isnan(pvi))
+			{
+				printf("dist(x, y, polyline[i - 1].x, polyline[i - 1].y) = %lf\n", dist(x, y, polyline[i - 1].x, polyline[i - 1].y));
+				printf("r = %lf\n", r);
+				printf("cosAngle(polyline[i - 1], Pt(x, y), polyline[i + 1]) = %lf\n", cosAngle(polyline[i - 1], Pt(x, y), polyline[i + 1]));
+				printf("cosAngle(Pt(x, y), polyline[i + 1], polyline[i + 2]) = %lf\n", cosAngle(Pt(x, y), polyline[i + 1], polyline[i + 2]));
+				system("pause");
+			}
 		}
 		else if (i == k - 1)
 		{
 			pvi += r * r * (1 + cosAngle(polyline[i - 2], polyline[i - 1], Pt(x, y))); //π(vi-1)
 			pvi += r * r * (1 + cosAngle(polyline[i - 1], Pt(x, y), polyline[i + 1])); //π(vi)
 			pvi += dist(x, y, polyline[i + 1].x, polyline[i + 1].y); //μ+(vi)
+			if (isnan(pvi))
+			{
+				printf("dist(x, y, polyline[i + 1].x, polyline[i + 1].y) = %lf\n", dist(x, y, polyline[i + 1].x, polyline[i + 1].y));
+				printf("r = %lf\n", r);
+				printf("cosAngle(polyline[i - 2], polyline[i - 1], Pt(x, y)) = %lf\n", cosAngle(polyline[i - 2], polyline[i - 1], Pt(x, y)));
+				printf("cosAngle(polyline[i - 1], Pt(x, y), polyline[i + 1]) = %lf\n", cosAngle(polyline[i - 1], Pt(x, y), polyline[i + 1]));
+				system("pause");
+			}
 		}
 		else if (i == k)
 		{
 			pvi += r * r * (1 + cosAngle(polyline[i - 2], polyline[i - 1], Pt(x, y))); //π(vi-1)
 			pvi += dist(x, y, polyline[i - 1].x, polyline[i - 1].y); //μ-(vi)
+			if (isnan(pvi))
+			{
+				printf("dist(x, y, polyline[i - 1].x, polyline[i - 1].y) = %lf\n", dist(x, y, polyline[i - 1].x, polyline[i - 1].y));
+				printf("r = %lf\n", r);
+				printf("cosAngle(polyline[i - 2], polyline[i - 1], Pt(x, y)) = %lf\n", cosAngle(polyline[i - 2], polyline[i - 1], Pt(x, y)));
+				system("pause");
+			}
 		}
 		else
 		{
 			pvi += r * r * (1 + cosAngle(polyline[i - 2], polyline[i - 1], Pt(x, y))); //π(vi-1)
 			pvi += r * r * (1 + cosAngle(polyline[i - 1], Pt(x, y), polyline[i + 1])); //π(vi)
 			pvi += r * r * (1 + cosAngle(Pt(x, y), polyline[i + 1], polyline[i + 2])); //π(vi+1)
+			if (isnan(pvi))
+			{
+				printf("r = %lf\n", r);
+				printf("cosAngle(polyline[i - 2], polyline[i - 1], Pt(x, y)) = %lf\n", cosAngle(polyline[i - 2], polyline[i - 1], Pt(x, y)));
+				printf("cosAngle(polyline[i - 1], Pt(x, y), polyline[i + 1]) = %lf\n", cosAngle(polyline[i - 1], Pt(x, y), polyline[i + 1]));
+				printf("cosAngle(Pt(x, y), polyline[i + 1], polyline[i + 2]) = %lf\n", cosAngle(Pt(x, y), polyline[i + 1], polyline[i + 2]));
+			}
 		}
 	}
 	//cout << "angle penalty = " << lambdaP * 1 / (k + 1) * pvi << endl;
@@ -622,8 +669,21 @@ void PolylineGenerator::optimizationEx()
 				double gradient_x = gradient.first;
 				double gradient_y = gradient.second;
 				//归一化
-				double direction_x = -gradient_x / sqrt(gradient_x * gradient_x + gradient_y * gradient_y);
-				double direction_y = -gradient_y / sqrt(gradient_x * gradient_x + gradient_y * gradient_y);
+				double direction_x;
+				double direction_y;
+				if (abs(gradient_x) < eps)
+				{
+					direction_x = 0;
+				}
+				if (abs(gradient_y) < eps)
+				{
+					direction_y = 0;
+				}
+				if (abs(gradient_x) >= eps && abs(gradient_y) >= eps)
+				{
+					direction_x = -gradient_x / sqrt(gradient_x * gradient_x + gradient_y * gradient_y);
+					direction_y = -gradient_y / sqrt(gradient_x * gradient_x + gradient_y * gradient_y);
+				}
 				//求步长
 				//double step = calcStep(polyline[i].x, polyline[i].y, i);
 				double step = 0.5;

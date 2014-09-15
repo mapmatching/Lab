@@ -30,9 +30,6 @@
     <ClCompile Include="PointGridIndex.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="polylineGenerator.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="Traj.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
@@ -58,6 +55,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="PointMover.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="PolylineGenerator.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

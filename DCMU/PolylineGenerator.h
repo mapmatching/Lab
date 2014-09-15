@@ -1,5 +1,5 @@
 /* 
- * Last Updated at [2014/9/10 22:04] by wuhao
+ * Last Updated at [2014/9/15 14:08] by wuhao
  */
 #pragma once
 #include <iostream>
@@ -7,6 +7,7 @@
 #include <list>
 #include "Matrix.h"
 using namespace std;
+#define eps 1e-7
 
 struct Pt
 {

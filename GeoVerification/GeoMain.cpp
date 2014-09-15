@@ -22,13 +22,13 @@ void initialization()
 	//初始化地图
 	roadNetwork.setArea(&area);
 	roadNetwork.openOld("D:\\trajectory\\singapore_data\\singapore_map\\", 50);
-	roadNetwork.deleteEdges("D:\\trajectory\\singapore_data\\experiments\\big area\\newDeletedEdges.txt");
+	roadNetwork.deleteEdges("D:\\trajectory\\singapore_data\\experiments\\big area\\geo\\area1\\newDeletedEdges.txt");
 
 	//读路
 	//TrajReader tReader("roads_MI.txt");
 	//TrajReader tReader("roads_bones.txt");
 	//TrajReader tReader("D:\\trajectory\\singapore_data\\experiments\\big area\\roads_wy2.txt");
-	TrajReader tReader("D:\\trajectory\\singapore_data\\experiments\\big area\\roads_DCMU_new.txt");
+	TrajReader tReader("D:\\trajectory\\singapore_data\\experiments\\big area\\geo\\area1\\roads_DCMU_new.txt");
 	tReader.readTrajs(figures);
 
 	//初始化画板

@@ -24,7 +24,9 @@ using namespace std;
 using namespace Gdiplus;
 
 //Area area(1.294788, 1.327723, 103.784667, 103.825200); //small
-Area area(1.294788, 1.393593, 103.784667, 103.906266); //big
+//Area area(1.294788, 1.393593, 103.784667, 103.906266); //big
+Area area(1.343593, 1.442398, 103.784667, 103.906266); //big2
+//Area area(1.294788, 1.393593, 103.704667, 103.826266); //big3
 
 Map roadNetwork;
 Map originalRoadNetwork; //Œ¥”√
@@ -36,9 +38,9 @@ void initialization()
 {
 	roadNetwork.setArea(&area);
 	roadNetwork.openOld("D:\\trajectory\\singapore_data\\singapore_map\\", 150);
-	roadNetwork.deleteEdges("D:\\trajectory\\singapore_data\\experiments\\big area\\deletedEdges.txt");
+	roadNetwork.deleteEdges("D:\\trajectory\\singapore_data\\experiments\\big area\\geo\\area2\\deletedEdges.txt");
 	
-	TrajReader tr("D:\\trajectory\\singapore_data\\experiments\\big area\\newMMTrajs_unmatched.txt");
+	TrajReader tr("D:\\trajectory\\singapore_data\\experiments\\big area\\geo\\area2\\newMMTrajs_unmatched.txt");
 	list<Traj*> trajs;
 	tr.readTrajs(trajs);// , 50000);
 	list<GeoPoint*> allPts;
