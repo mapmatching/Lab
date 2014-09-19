@@ -11,11 +11,15 @@ using namespace std;
 using namespace Gdiplus;
 
 Map roadNetwork;
-Area area(1.294788, 1.393593, 103.784667, 103.906266); //big
+//Area area(1.294788, 1.393593, 103.784667, 103.906266); //big
+Area area(1.343593, 1.442398, 103.784667, 103.906266); //big2
+//Area area(1.294788, 1.393593, 103.704667, 103.826266); //big3
+
 MapDrawer md;
 vector<Figure*> figures;
 
-string inputDeletedEdgesPath = "D:\\trajectory\\singapore_data\\experiments\\big area\\deletedEdges.txt";
+string workspaceFolder = "D:\\trajectory\\singapore_data\\experiments\\big area\\geo\\area2\\";
+string inputDeletedEdgesPath = workspaceFolder + "deletedEdges.txt";
 
 void initialization()
 {
@@ -43,7 +47,7 @@ void dealwithDeleteEdge(int gridwith, double thresholdM, int thresholdI)
 	PointGridIndex pGridIndex;
 	
 	//打开需要判断的点文件
-	TrajReader tr("D:\\trajectory\\singapore_data\\experiments\\big area\\newMMTrajs_unmatched.txt");
+	TrajReader tr(workspaceFolder + "newMMTrajs_unmatched.txt");
 	list<Traj*> trajs;
 	tr.readTrajs(trajs);
 	list<GeoPoint*> allPts;
@@ -121,7 +125,7 @@ void dealwithDeleteEdge(int gridwith, double thresholdM, int thresholdI)
 				if (roadNetwork.distM((*iter)->lat, (*iter)->lon, edge) <= thresholdM) RNcount++;
 				if (RNcount > thresholdI) break;
 			}
-			if (RNcount <= thresholdI) {
+			if (RNcount <= thresholdI || roadNetwork.edges[edgeId]->lengthM > 4000){// * roadNetwork.edges[edgeId]->lengthM) {
 				otherDelEdge.push_back(edgeId);
 			}
 			else {
@@ -178,7 +182,7 @@ void test()
 {
 	initialization();
 	//参数
-	int thresholdI = 150;
+	int thresholdI = 200; //密度阈值为1点/m
 	double thresholdM = 30;
 	int gridwith = 500; 
 

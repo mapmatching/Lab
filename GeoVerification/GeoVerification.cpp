@@ -23,15 +23,19 @@ void GeoVerification::verificate(vector<Figure*>& genFigures, MapDrawer& md)
 	{
 		Figure::iterator ptIter = genFigures[i]->begin(), nextPtIter = ptIter;
 		nextPtIter++;
+		double figureLength = 0;
 		while (1)
 		{
 			if (nextPtIter == genFigures[i]->end())
 				break;
 			totalGenLengthM += GeoPoint::distM((*ptIter)->lat, (*ptIter)->lon, (*nextPtIter)->lat, (*nextPtIter)->lon);
+			figureLength += GeoPoint::distM((*ptIter)->lat, (*ptIter)->lon, (*nextPtIter)->lat, (*nextPtIter)->lon);
 			ptIter++;
 			nextPtIter++;
 		}
+		matchedGenFiguresLength.push_back(make_pair(0, figureLength));
 	}
+
 
 	//删除掉双向路的一边
 	//[注意]deletedEdges必须保证双向路在数组中的存放顺序一定是连续的
@@ -93,11 +97,18 @@ void GeoVerification::verificate(vector<Figure*>& genFigures, MapDrawer& md)
 	//totalGenLengthM += 25 * 20 * 2;
 	//for wang yin
 	totalDelLengthM /= 2;
+	//cal correctfLength
+	int correctLengthM2 = 0;
+	for (int i = 0; i < matchedGenFiguresLength.size(); i++)
+	{
+		correctLengthM2 += matchedGenFiguresLength[i].first;
+	}
 	cout << "totalDelLength = " << totalDelLengthM << endl;
 	cout << "totalGenLength = " << totalGenLengthM << endl;
 	cout << "correctLength = " << correctLengthM << endl;
+	cout << "correctLength2 = " << correctLengthM2 << endl;
 	cout << "recall = " << correctLengthM / totalDelLengthM << endl;
-	cout << "precision = " << correctLengthM / totalGenLengthM << endl;
+	cout << "precision = " << correctLengthM2 / totalGenLengthM << endl;
 }
 
 
@@ -154,6 +165,14 @@ bool GeoVerification::verificateOneSegment(Segment segment, vector<Figure*>& gen
 		{
 			correctEdgeCount++;
 			correctLengthM += GeoPoint::distM(fromPt, toPt);
+			if (matchedGenFiguresLength[i].first + GeoPoint::distM(fromPt, toPt) <= matchedGenFiguresLength[i].second)
+			{
+				matchedGenFiguresLength[i].first += GeoPoint::distM(fromPt, toPt);
+			}
+			else
+			{
+				matchedGenFiguresLength[i].first = matchedGenFiguresLength[i].second;
+			}
 		}
 		if (correctEdgeCount == 1)
 		{

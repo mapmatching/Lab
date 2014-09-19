@@ -6,8 +6,11 @@ PtForce PointMover::calForce(GeoPoint* p0, GeoPoint* p)
 	//////////////////////////////////////////////////////////////////////////
 	///计算p对p0的作用力
 	//////////////////////////////////////////////////////////////////////////
-	double dist = GeoPoint::distM(p0, p);
-	double force = dist * dist / 100;
+	double distX = (p->lon - p0->lon) * 100.0;
+	double distY = (p->lat - p0->lat) * 100.0;
+	double forceX = distX * distX / 10000.0;
+	double forceY = distY * distY / 10000.0;
+	return PtForce(forceX, forceY);
 }
 
 PtForce PointMover::resultantForce(GeoPoint* pt)
@@ -27,13 +30,14 @@ PtForce PointMover::resultantForce(GeoPoint* pt)
 
 void PointMover::movePoint(GeoPoint* pt)
 {
-	double alpha = 0.1;
+	double alpha = 0.5;
 	PtForce resultantF = resultantForce(pt);
 	double moveLat = resultantF.forceY * alpha;
 	double moveLon = resultantF.forceX * alpha;
 	pt->lat += moveLat;
 	pt->lon += moveLon;
-	printf("moveLatM = %lf, moveLonM = %lf", moveLat * GeoPoint::geoScale, moveLon * GeoPoint::geoScale);
+	//printf("moveLatM = %lf, moveLonM = %lf", moveLat * GeoPoint::geoScale, moveLon * GeoPoint::geoScale);
+	//system("pause");
 }
 
 GeoPoint* PointMover::selectPointToMove()
@@ -55,7 +59,7 @@ void PointMover::run(PointGridIndex* _ptIndex)
 			}
 		}
 	}
-	int iteration = 10000;
+	int iteration = 500000;
 	for (int i = 0; i < iteration; i++)
 	{
 		GeoPoint* victimPt = selectPointToMove();

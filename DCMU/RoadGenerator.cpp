@@ -160,7 +160,7 @@ void RoadGenerator::genPolyLine(Cluster* cluster, MapDrawer& md)
 	//设置坐标转换器，将空间坐标映射到5000像素范围上比较合适
 	MapDrawer mdTempForCoordThrans;
 	mdTempForCoordThrans.setArea(&area);
-	mdTempForCoordThrans.setResolution(5000);
+	mdTempForCoordThrans.setResolution(10000);
 
 	for each (GeoPoint* gPt in cluster->pts)
 	{

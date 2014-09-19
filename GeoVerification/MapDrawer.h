@@ -154,7 +154,6 @@ public:
 	void drawInt(Gdiplus::Color color, int x, int y, int value);
 	void drawDouble(Gdiplus::Color color, int x, int y, double Value, int precision = 6);
 
-
 private:
 	ULONG_PTR gdiplusToken;
 	Gdiplus::Bitmap* bm;

@@ -37,7 +37,7 @@ public:
 	double r;
 	int n;
 	double lambdaP;
-	double anglePenalty = 0.005; //跑wangyin实验用0.02比较好
+	double anglePenalty = 0.008; //跑wangyin实验用0.02比较好
 
 	//中心差分求导用
 	int max_it = 100000;

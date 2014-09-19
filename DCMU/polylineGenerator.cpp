@@ -654,13 +654,13 @@ void PolylineGenerator::optimizationEx()
 		{
 			//直到这个点的调整幅度达到收敛阈值
 			//TEST: 先对每个点迭代3次
-			for (int iter = 0; iter < 50; iter++)
+			for (int iter = 0; iter < 100; iter++)
 			{
 				double Gvi = calculate(polyline[i].x, polyline[i].y, i);
 				//if (abs(Gvi - preGvi) / Gvi < convergeThreshold)
 				//{
 				//		break;
-				//	}
+				//	} 
 				//printf("Gvi = %lf\n", Gvi);
 				//求梯度
 				double (PolylineGenerator::* pCalcFunc)(double, double, int); //一个类成员函数指针变量pmf的定义
@@ -675,18 +675,21 @@ void PolylineGenerator::optimizationEx()
 				{
 					direction_x = 0;
 				}
+				else
+				{
+					direction_x = -gradient_x / sqrt(gradient_x * gradient_x + gradient_y * gradient_y);
+				}
 				if (abs(gradient_y) < eps)
 				{
 					direction_y = 0;
 				}
-				if (abs(gradient_x) >= eps && abs(gradient_y) >= eps)
+				else
 				{
-					direction_x = -gradient_x / sqrt(gradient_x * gradient_x + gradient_y * gradient_y);
 					direction_y = -gradient_y / sqrt(gradient_x * gradient_x + gradient_y * gradient_y);
 				}
 				//求步长
 				//double step = calcStep(polyline[i].x, polyline[i].y, i);
-				double step = 0.5;
+				double step = 0.3;
 				//printf("step = %lf, gv[%d] = %lf\n", step, i, Gvi);
 				//system("pause");
 				//移动点

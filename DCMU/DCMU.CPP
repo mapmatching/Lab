@@ -38,7 +38,7 @@ void DCMU::run1()
 {
 	allPtIndex.drawGridLine(Gdiplus::Color::Green, md);
 	//Íø¸ñ¾ÛÀà
-	int index = 21;
+	int index = 54;
 	gridClustering();
 	//denoiser.run(ptIndexes[index]);
 	for (int i = 0; i < ptIndexes.size(); i++)

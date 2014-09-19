@@ -29,7 +29,7 @@ public:
 	void drawPoints();
 
 private:
-	double range = 25.0;
+	double range = 35.0;
 	PointGridIndex* ptIndex;
 	vector<GeoPoint*> pts;
 	void movePoint(GeoPoint* pt);

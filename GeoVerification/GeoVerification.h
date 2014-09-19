@@ -20,6 +20,7 @@ public:
 
 private:
 	vector<Edge*> delEdges_oneway;
+	vector<pair<double, double> > matchedGenFiguresLength; //记录生成的路段上已被匹配的长度
 	bool verificateOneSegment(Segment segment, vector<Figure*>& genFigures);
 	void clipEdges(vector<Edge*>& delEdges);
 	//Map roadNetwork;
